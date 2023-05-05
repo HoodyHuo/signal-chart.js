@@ -1,11 +1,11 @@
 {
-  "name": "signal-chart-threejs",
+  "name": "signal-chart",
   "version": "0.0.1",
   "description": "采用Threejs实现的信号相关图谱库",
-  "main": "./lib/SignalChart.cjs.js",
-  "module": "./lib/SignalChart.js",
-  "umd": "./lib/SignalChart.umd.js",
-  "types": "./lib/types/SignalChart.d.ts",
+  "main": "./lib/signal-chart.cjs.js",
+  "module": "./lib/signal-chart.js",
+  "umd": "./lib/signal-chart.umd.js",
+  "types": "./lib/types/signal-chart.d.ts",
   "scripts": {
     "prettier": "prettier --write .",
     "prepare": "husky install",
