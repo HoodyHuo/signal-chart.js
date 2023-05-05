@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Page Title</title>
+    <script src="axios.js"></script>
+</head>
+
+<body>
+    <script type="module" >
+        import {Spectrogram} from '../lib/SignalChart.js'
+        debugger
+        // animate
+        axios.get('./TFData.data', { responseType: 'arraybuffer' }).then(res => {
+            //     const bitData = res.data
+            //     const uint8Array = new Int8Array(bitData).slice(0, MAX_POINTS * 1000)
+            //     const jsonData = new Float32Array(uint8Array.length*3)
+            //     for (let i = 0; i < uint8Array.length; i++) {
+            //         jsonData[i * 3] = (i % MAX_POINTS) 
+            //         jsonData[i * 3 + 1] = (uint8Array[i] + 30) *8
+            //         jsonData[i * 3 + 2] = 0
+            //     }
+            //     let index = 0
+
+            //     setInterval(function () {
+            //         stats.begin();
+
+            //         const data = jsonData.slice(index, index+drawCount * 3)
+            //         line.geometry.attributes.position.array = data
+            //         // line.geometry.setDrawRange(0, drawCount);
+            //         line.geometry.attributes.position.needsUpdate = true; // required after the first render
+            //         render();
+            //         index+= drawCount
+            //         if(index > jsonData.length){
+            //             index = 0
+            //         }
+            //         stats.end();
+            //     }, 0)
+            // })
+
+    </script>
+
+</body>
+
+</html>
