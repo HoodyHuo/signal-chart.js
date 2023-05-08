@@ -13,7 +13,7 @@ var Stats = function () {
 	var mode = 0;
 
 	var container = document.createElement( 'div' );
-	container.style.cssText = 'position:fixed;top:0;left:0;cursor:pointer;opacity:0.9;z-index:10000';
+	container.style.cssText = 'position:relative;top:0;left:0;cursor:pointer;opacity:0.9;z-index:10000;width:80px;height:80px';
 	container.addEventListener( 'click', function ( event ) {
 
 		event.preventDefault();

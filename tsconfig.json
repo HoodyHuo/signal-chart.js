@@ -11,7 +11,7 @@
     "noImplicitAny": true /* 检查隐含 any 类型的表达式和声明 */,
     "strictNullChecks": false /* 严格空检查. */,
     /* 额外检查 */
-    "noUnusedLocals": true /* 检查无用的变量. */,
+    "noUnusedLocals": false /* 检查无用的变量. */,
     /* Module Resolution Options */
     "moduleResolution": "classic" /* 指定模块查找策略： 'node' (Node.js) or 'classic' (TypeScript pre-1.6) */,
     "baseUrl": "./" /* 查找模块的基础目录 */,
