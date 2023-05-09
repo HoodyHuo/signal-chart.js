@@ -3,15 +3,16 @@ import { GramOptions } from './common'
 import * as THREE from 'three'
 export default abstract class Gram {
   dom: HTMLElement
-  renderer: THREE.Renderer
+  renderer: THREE.WebGLRenderer
   scene: THREE.Scene
-  camera: THREE.Camera
+  camera: THREE.PerspectiveCamera
 
   //性能监视器
   stats: Stats
 
   constructor(options: GramOptions) {
     this.dom = options.El
+    this.dom.style.position = 'relative'
     this.stats = this.initStateMonitor(options.El, options.Performance)
     this.setStats(options.Performance)
     this.renderer = this.initRender(options.El)
@@ -54,7 +55,7 @@ export default abstract class Gram {
     return stats
   }
   /** 初始化渲染器 */
-  private initRender(el: HTMLDivElement): THREE.WebGLRenderer {
+  private initRender(el: HTMLElement): THREE.WebGLRenderer {
     // renderer
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
@@ -65,13 +66,13 @@ export default abstract class Gram {
     return renderer
   }
   /** 创建场景 */
-  private initScene(El: HTMLDivElement): THREE.Scene {
+  private initScene(El: HTMLElement): THREE.Scene {
     // scene 创建场景
     const scene = new THREE.Scene()
     return scene
   }
   /** 创建投影摄像机 */
-  private initCamera(el: HTMLDivElement): THREE.Camera {
+  private initCamera(el: HTMLElement): THREE.PerspectiveCamera {
     // camera 创建投影摄像机
     const camera = new THREE.PerspectiveCamera(45, el.clientWidth / el.clientHeight, 1, 10000)
     camera.position.set(3000, 0, 6000)
