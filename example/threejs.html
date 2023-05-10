@@ -16,44 +16,104 @@
 </head>
 
 <body>
+    <button onclick="setMode(0)">刷新模式</button>
+    <button onclick="setMode(1)">最大保持</button>
+    <button onclick="setMode(2)">最小保持</button>
+    <button onclick="setMode(3)">平均</button>
+    <button onclick="getBorder()">边框数据</button>
+
     <div id="cont" class="cont" ></div>
     <script type="module" >
+        
         import {Spectrogram} from '../lib/signal-chart.js'
-        const MAX_POINTS  = 6558
+        const MAX_POINTS  = 4800
         const gram = new Spectrogram({
-            keepMode: 3, // 保持模式 0 刷新 1 最大 2 最小 3 平均
-            maxPoint: MAX_POINTS,
+            keepMode: 0, // 保持模式 0 刷新 1 最大 2 最小 3 平均
+            
             cacheCount: 500,
             Performance: true, // 是否打开性能监视窗口
             El: document.getElementById("cont"), // 图形绘制节点 
+            color:{
+                background:'#ffffff',
+                line:"#000000",
+            }
         })
 
-        gram.line.scale.y = 10
-        gram.line.scale.x = 0.7
+        document.getElementById('cont')
+        .addEventListener('mousemove',(event)=>{
+            console.log(gram.getPointValue(event.offsetX,event.offsetY))
+            if(event.altKey){
+                const c = gram.getProject()
+            }
+            if(event.ctrlKey){
+                gram.move({x:-event.movementX,y:event.movementY})
+            }
+            
+        })
+        let sc = 1
+        function getScale(b){
+            if(b>0){
+                sc-=0.3
+            }else{
+                sc+=0.3
+            }
+
+            if(sc<=0.1){
+                sc = 0.1
+            }
+            return sc
+        }
 
 
+        document.getElementById('cont')
+        .addEventListener('mousewheel',(event)=>{
+            const old = gram.threeLayer.camera.scale
+            gram.threeLayer.camera.scale.set(getScale(event.deltaY),old.y,old.z)
+            // gram.scale(event.deltaY)
+            
+        })
 
+     
+        window.setMode = function(mode){
+            gram.setKeepMode(mode)
+        }
+
+        window.getBorder = function(){
+            const v = gram.getBorderValue()
+            console.log(v)
+        }
+        gram.threeLayer.camera.position.set(3028, 725, 9000)
+        gram.threeLayer.camera.lookAt(3000,0,0)
         // animate
-        axios.get('./TFData.data', { responseType: 'arraybuffer' }).then(res => {
+        axios.get('./fftData-4.dat', { responseType: 'arraybuffer' }).then(res => {
                 const bitData = res.data
                 // 取出1000帧
-                const uint8Array = new Int8Array(bitData).slice(0, MAX_POINTS * 100000)
-                const float32Arr = Float32Array.from(uint8Array)
+                // const dv = new DataView(bitData)
+                // const float32Arr = new Float32Array(bitData.byteLength/4)
+                // for(let i = 0;i<bitData.byteLength/4;i++){
+                //     const b  =  dv.getFloat32(i*4,false) 
+                //     float32Arr[i] = b
+                // }
+
+                gram.setFreqRange(0,9600/2)
+                const float32Arr = new Float32Array(bitData)
                 let index = 0
                 setInterval(function () {
+                    // 如果下标超出数据范围，重新移动到0
+                    if (index + MAX_POINTS > float32Arr.length) {
+                        index = 0
+                    }
                     // 根据下标，从总数据包中取出接下来的一段，因为数据包含XYZ，所以长度要取 3倍
                     const data = float32Arr.slice(index, index + MAX_POINTS )
                     gram.update(data)
                     //取数下标更新
                     index += MAX_POINTS
-                    // 如果下标超出数据范围，重新移动到0
-                    if (index > float32Arr.length) {
-                        index = 0
-                    }
-                }, 1000/60)
+                    
+                }, 1000/10)
 
             })
-
+        
+             
     </script>
 
 </body>

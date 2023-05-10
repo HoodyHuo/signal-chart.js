@@ -1,11 +1,11 @@
-import Stats from '../tool/stats/stats'
-import { GramOptions } from './common'
+import Stats from './../../tool/stats/stats'
 import * as THREE from 'three'
+import { GramOptions } from './SpectrogramCommon'
 export default abstract class Gram {
   dom: HTMLElement
   renderer: THREE.WebGLRenderer
   scene: THREE.Scene
-  camera: THREE.PerspectiveCamera
+  camera: THREE.OrthographicCamera
 
   //性能监视器
   stats: Stats
@@ -72,10 +72,13 @@ export default abstract class Gram {
     return scene
   }
   /** 创建投影摄像机 */
-  private initCamera(el: HTMLElement): THREE.PerspectiveCamera {
+  private initCamera(el: HTMLElement): THREE.OrthographicCamera {
+    const k = el.clientWidth / el.clientHeight
+    const s = 150
     // camera 创建投影摄像机
-    const camera = new THREE.PerspectiveCamera(45, el.clientWidth / el.clientHeight, 1, 10000)
-    camera.position.set(3000, 0, 6000)
+    const camera = new THREE.OrthographicCamera(-s*k,s*k,s,-s,0.1,50000)
+    camera.position.set(3000, 0, -1)
+    camera.lookAt(this.scene.position)
     return camera
   }
 }

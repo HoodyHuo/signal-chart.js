@@ -1,1 +1,1 @@
-export * from './chart/Spectrogram'
+export * from './chart/spectrogram/Spectrogram'
