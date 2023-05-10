@@ -18,7 +18,7 @@ export class SpectrogramThreeLayer extends Gram {
 
   /** ------------------------ 数据 ------------------------------- */
   //当前帧数据
-  protected data: Float32Array = new Float32Array(0)
+  public data: Float32Array = new Float32Array(0)
   //当前帧绘制数据（threejs）
   protected drawData: Float32Array
   /**绘制点数 */
@@ -31,6 +31,15 @@ export class SpectrogramThreeLayer extends Gram {
   protected avgData: Float32Array
 
   /** ------------------------ 数据图形 ------------------------------- */
+
+  /** 当前视图低电平 */
+  private lowLevel: number = -150
+  /** 当前视图高电平 */
+  private highLevel: number = 30
+
+  private viewLeft: number = 0
+  private viewRight: number = 10000
+
   //线条
   private lineMaterial: THREE.LineBasicMaterial
   private line: THREE.Line
@@ -38,7 +47,7 @@ export class SpectrogramThreeLayer extends Gram {
   //  创建缓存几何体
   private lineGeometry: THREE.BufferGeometry
 
-  /** ------------------------ 网格图形 ------------------------------- */
+  /** ------------------------ 辅助 ------------------------------- */
   /**投影射线工具 */
   private raycaster: THREE.Raycaster = new THREE.Raycaster()
 
@@ -67,7 +76,7 @@ export class SpectrogramThreeLayer extends Gram {
     this.renderer.setClearColor(options.color.background, 1.0)
 
     const a = new THREE.AxesHelper(10000)
-    a.position.set(0,0,0)
+    a.position.set(0, 0, 0)
     this.scene.add(a)
 
     // new OrbitControls(this.camera, this.dom)
@@ -78,9 +87,48 @@ export class SpectrogramThreeLayer extends Gram {
     this.camera.position.set(oldP.x + delta.x, oldP.y + delta.y, oldP.z)
   }
 
-  public scale(scale:number){
-    const oldP = this.camera.position
-      this.camera.position.set(oldP.x,oldP.y,oldP.z+scale)
+  /**
+   * 设置绘制线的下标范围
+   * @param startX 开始显示的下标（即x轴坐标）
+   * @param endX 截止显示的下标（即x轴坐标）
+   */
+  public setViewRange(startX: number, endX: number) {
+    this.viewLeft = startX
+    this.viewRight = endX
+    this.camera.scale.set(1, this.camera.scale.y, 1)
+    // 调整位置到数据中心
+    const viewCenter: Position = this.getViewCenter()
+    this.camera.position.set(viewCenter.x, viewCenter.y, 0.1)
+    this.camera.lookAt(new THREE.Vector3(viewCenter.x, viewCenter.y, 0))
+    // 缩放数据到合适窗口
+    const { left, right } = this.getBorderValue() //获取比例为1当前屏幕的显示范围
+    const scale = (endX - startX) / (right - left) // 计算要显示的范围和当前的比例
+    this.camera.scale.set(scale, this.camera.scale.y, 1) //设置缩放
+  }
+
+  /**
+   * 设置当前显示区域的电平范围
+   * @param lowLevel 低点电平 dbm
+   * @param highLevel 高点电平 dbm
+   */
+  public setViewLevel(lowLevel: number, highLevel: number) {
+    this.lowLevel = lowLevel
+    this.highLevel = highLevel
+    this.camera.scale.set(this.camera.scale.x, 1, 1)
+    // 调整位置到数据中心
+    const viewCenter: Position = this.getViewCenter()
+    this.camera.position.set(viewCenter.x, viewCenter.y, 0.1)
+    this.camera.lookAt(new THREE.Vector3(viewCenter.x, viewCenter.y, 0))
+    // 缩放数据到合适窗口
+    const { top, bottom } = this.getBorderValue() //获取比例为1当前屏幕的显示范围
+    const scale = (highLevel - lowLevel) / (top - bottom) // 计算要显示的范围和当前的比例
+    this.camera.scale.set(this.camera.scale.x, scale, 1) //设置缩放
+  }
+  getViewCenter(): Position {
+    return {
+      x: (this.viewRight - this.viewLeft) / 2 + this.viewLeft,
+      y: (this.highLevel - this.lowLevel) / 2 + this.lowLevel,
+    }
   }
 
   /**
@@ -89,14 +137,14 @@ export class SpectrogramThreeLayer extends Gram {
    * @param y 在dom上的Y坐标
    * @returns 坐标对应在三维图像中的位置
    */
-  public translateToWorld(x: number, y: number): Position|null {
+  public translateToWorld(x: number, y: number): Position | null {
     // 计算标准设备位置
     const x1 = (x / this.dom.clientWidth) * 2 - 1
     const y1 = (-y / this.dom.clientHeight) * 2 + 1
     //将射线调整到从摄像头发出，到标准位置的方向
     this.raycaster.setFromCamera(new THREE.Vector2(x1, y1), this.camera)
     // 创建结果保存对象
-    const pointV = new THREE.Vector3() 
+    const pointV = new THREE.Vector3()
     // 获取射线，并计算与平面的交点，平面new Plane(new THREE.Vector3(0, 0, 1) 表示平面垂直与Z轴
     const returnV = this.raycaster.ray.intersectPlane(new Plane(new THREE.Vector3(0, 0, 1)), pointV)
     // 返回交点，因为摄像头垂直于Z轴，所以理论上一定与XY 平面有交点。

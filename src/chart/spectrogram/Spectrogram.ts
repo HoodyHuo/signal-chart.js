@@ -38,6 +38,7 @@ export class Spectrogram {
 
     this.threeLayer = new SpectrogramThreeLayer(fullOptions)
     this.gridLayer = new SpectrogramGridLayer(fullOptions)
+    // this.setViewLevelRange(-100, 20)
 
     // 标尺原点，以此为起点
     this.AXIS_ORIGIN = {
@@ -53,7 +54,6 @@ export class Spectrogram {
   public setFreqRange(startFreq: number, endFreq: number) {
     this.startFreq = startFreq
     this.endFreq = endFreq
-    this.gridLayer.setFreqRange(startFreq,endFreq)
   }
 
   /**
@@ -62,29 +62,49 @@ export class Spectrogram {
    * @param startFreq 起点频率
    * @param endFreq 终点频率
    */
-  public setViewFreqRange(startFreq:number,endFreq:number){
-    this.gridLayer.setFreqRange(startFreq,endFreq)
+  public setViewFreqRange(startFreq: number, endFreq: number) {
+    if (startFreq < this.startFreq || endFreq > this.endFreq || endFreq <= startFreq) {
+      throw new Error('设置起止频率范围错误')
+    }
+    const starIndex: number = this.getDataIndexByFreq(startFreq)
+    const endIndex: number = this.getDataIndexByFreq(endFreq)
+    this.threeLayer.setViewRange(starIndex, endIndex)
+    this.gridLayer.setFreqRange(startFreq, endFreq)
+  }
+  /**
+   * 设置当前图谱展示的电平值范围
+   * @param lowLevel 低点电平
+   * @param highLevel 高点电平
+   */
+  public setViewLevelRange(lowLevel: number, highLevel: number) {
+    if (lowLevel >= highLevel) {
+      throw new Error('设置起止频率范围错误')
+    }
+    this.threeLayer.setViewLevel(lowLevel, highLevel)
+    this.gridLayer.setViewLevel(lowLevel, highLevel)
   }
 
   /**
-   * 设置当前图谱展示的电平值范围
-   * @param startLevel 起点电平
-   * @param endLevel 终点电平
+   * 通过频率获取对应数据的序号
+   * @param freq 频率
+   * @returns 频率对应在数据结构中的序号
    */
-  public setViewLevelRange(startLevel:number,endLevel:number){
-      throw new Error("mathod not impl");
+  public getDataIndexByFreq(freq: number): number {
+    const abs = this.endFreq - this.startFreq
+    return Math.round(((freq - this.startFreq) * 4800) / abs)
   }
+
   /**
-   * 通过dom上的dom元素的左上坐标系位置获取世界坐标系的X,Y 
+   * 通过dom上的dom元素的左上坐标系位置获取世界坐标系的X,Y
    * @param x  x
    * @param y  y
-   * @returns 
+   * @returns
    */
   public getPointValue(x: number, y: number): Position {
     return this.threeLayer.translateToWorld(x, y)
   }
 
-  public setKeepMode(mode:KeepMode){
+  public setKeepMode(mode: KeepMode) {
     this.keepMode = mode
     this.threeLayer.setKeepMode(mode)
   }
@@ -93,15 +113,10 @@ export class Spectrogram {
    * @param data 频谱数据（1帧）
    */
   public update(data: Float32Array) {
+    if (data.length !== this.threeLayer.data.length) {
+      this.resizeData(data)
+    }
     this.threeLayer.update(data)
-  }
-
-  public move(delta: Position) {
-   this.threeLayer.move(delta)
-  }
-
-  public scale(scale:number){
-    this.threeLayer.scale(scale)
   }
 
   /**
@@ -111,9 +126,9 @@ export class Spectrogram {
     return this.threeLayer.getBorderValue()
   }
 
-  
-  public getProject(){
+  /** 临时函数，用于绘制线图的包围框 */
+  public getProject() {
     const p = this.threeLayer.getProject()
-    this.gridLayer.draw(p.xmin,p.xmax,p.ymaxP,p.yminP)
+    this.gridLayer.draw(p.xmin, p.xmax, p.ymaxP, p.yminP)
   }
 }

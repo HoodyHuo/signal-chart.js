@@ -76,9 +76,10 @@ export default abstract class Gram {
     const k = el.clientWidth / el.clientHeight
     const s = 150
     // camera 创建投影摄像机
-    const camera = new THREE.OrthographicCamera(-s*k,s*k,s,-s,0.1,50000)
-    camera.position.set(3000, 0, -1)
-    camera.lookAt(this.scene.position)
+    const camera = new THREE.OrthographicCamera(-s * k, s * k, s, -s, 0.1, 1)
+    //默认摄像机定位在原点
+    camera.position.set(0, 0, 0.1)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
     return camera
   }
 }

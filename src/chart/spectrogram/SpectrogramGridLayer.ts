@@ -11,6 +11,11 @@ export class SpectrogramGridLayer {
   /** 当前视图终止频率 */
   private endFreqView: number
 
+  /** 当前视图低电平 */
+  private lowLevel: number
+  /** 当前视图高电平 */
+  private highLevel: number
+
   /**所有marker标点 */
   private markers: Array<Marker>
 
@@ -80,6 +85,18 @@ export class SpectrogramGridLayer {
   public setFreqRange(startFreq: number, endFreq: number) {
     this.startFreqView = startFreq
     this.endFreqView = endFreq
+    this.ctxAxis.fillText(`${startFreq}-${endFreq}`, 0, this.canvasAxis.height - 50)
+    // this.reDrawAxis()
+  }
+  /**
+   * 设置当前显示区域的电平范围
+   * @param lowLevel 低点电平 dbm
+   * @param highLevel 高点电平 dbm
+   */
+  public setViewLevel(lowLevel: number, highLevel: number) {
+    this.lowLevel = lowLevel
+    this.highLevel = highLevel
+    this.ctxAxis.fillText(`${highLevel}-${lowLevel}`, 0, 100)
     // this.reDrawAxis()
   }
   /** 重绘坐标轴 */
@@ -92,7 +109,7 @@ export class SpectrogramGridLayer {
     canvas.setAttribute('width', this.parentDom.clientWidth + 'px')
     canvas.setAttribute('height', this.parentDom.clientHeight + 'px')
     canvas.style.cssText = `
-      background-color: aquamarine;
+      
       opacity: 0.5;
       position:absolute;
       top:0;
