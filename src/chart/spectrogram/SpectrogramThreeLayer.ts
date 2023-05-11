@@ -1,6 +1,5 @@
 import Gram from './Gram'
 import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { Queue } from '@/tool/stats/Queue'
 import { Plane } from 'three'
 import { convertToDrawData, KeepMode, SpectrogramOptions } from './SpectrogramCommon'
@@ -10,16 +9,14 @@ import { Position } from '../common'
  * 频谱图Threejs组件
  */
 export class SpectrogramThreeLayer extends Gram {
-  /**配置*/
-  private options: SpectrogramOptions
-
   /** ------------------------ 信号 ------------------------------- */
+  /** 保持模式 */
   protected keepMode: KeepMode
 
   /** ------------------------ 数据 ------------------------------- */
-  //当前帧数据
+  /**当前帧数据 */
   public data: Float32Array = new Float32Array(0)
-  //当前帧绘制数据（threejs）
+  /**当前帧绘制数据（threejs） */
   protected drawData: Float32Array
   /**绘制点数 */
   protected drawCount: number
@@ -57,7 +54,6 @@ export class SpectrogramThreeLayer extends Gram {
    */
   constructor(options: SpectrogramOptions) {
     super(options)
-    this.options = options
     this.keepMode = options.keepMode
     /**创建帧缓存 */
     this.recentCache = new Queue<Float32Array>(options.cacheCount)
@@ -229,7 +225,7 @@ export class SpectrogramThreeLayer extends Gram {
    */
   public resizeData(data: Float32Array) {
     this.drawCount = data.length
-    this.clearDataCache()
+    this.clearDataCache(this.keepMode, this.drawCount)
   }
 
   /**
@@ -238,20 +234,31 @@ export class SpectrogramThreeLayer extends Gram {
    * @param mode 模式
    */
   public setKeepMode(mode: KeepMode) {
-    this.clearDataCache()
     this.keepMode = mode
+    this.clearDataCache(mode, this.drawCount)
   }
   /** 清理缓存数据 */
-  private clearDataCache() {
-    this.keepData = new Float32Array(this.drawCount)
-    this.avgData = new Float32Array(this.drawCount)
+  private clearDataCache(mode: KeepMode, pointCount: number) {
+    this.keepData = new Float32Array(pointCount)
+    //根据模式不同，初始化保持模式的内置数据
+    switch (mode) {
+      case KeepMode.MAX:
+        this.keepData = this.keepData.fill(Number.MIN_SAFE_INTEGER)
+        break
+      case KeepMode.MIN:
+        this.keepData = this.keepData.fill(Number.MAX_SAFE_INTEGER)
+        break
+    }
+    // 初始化平均模式数据
+    this.avgData = new Float32Array(pointCount)
     this.recentCache.clear()
-    this.data = new Float32Array(this.drawCount)
+    // 重新构造当前初始化的帧数
+    this.data = new Float32Array(pointCount)
+    this.drawData = new Float32Array(pointCount * 3)
 
-    this.drawData = new Float32Array(this.drawCount * 3)
     this.lineGeometry.setAttribute('position', new THREE.BufferAttribute(this.drawData, 3))
     // drawcalls 设置绘制 点数，
-    this.lineGeometry.setDrawRange(0, this.drawCount)
+    this.lineGeometry.setDrawRange(0, pointCount)
   }
   /**
    * 根据保持模式进行数据预处理
