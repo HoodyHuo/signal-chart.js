@@ -34,7 +34,7 @@
             Performance: true, // 是否打开性能监视窗口
             El: document.getElementById("cont"), // 图形绘制节点 
             color:{
-                background:'#ffffff',
+                background:'#999999',
                 line:"#000000",
             }
         })
@@ -45,35 +45,8 @@
             if(event.altKey){
                 const c = gram.getProject()
             }
-            if(event.ctrlKey){
-                gram.move({x:-event.movementX,y:event.movementY})
-            }
             
         })
-        let sc = 1
-        function getScale(b){
-            if(b>0){
-                sc-=0.3
-            }else{
-                sc+=0.3
-            }
-
-            if(sc<=0.1){
-                sc = 0.1
-            }
-            return sc
-        }
-
-
-        document.getElementById('cont')
-        .addEventListener('mousewheel',(event)=>{
-            const old = gram.threeLayer.camera.scale
-            gram.threeLayer.camera.scale.set(getScale(event.deltaY),old.y,old.z)
-            // gram.scale(event.deltaY)
-            
-        })
-
-     
         window.setMode = function(mode){
             gram.setKeepMode(mode)
         }
