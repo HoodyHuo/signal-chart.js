@@ -1,22 +1,18 @@
 // .eslintrc
 module.exports = {
+  env: {
+    browser: true,
+    es2021: true,
+    node: true,
+  },
+  extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'prettier'],
   parser: '@typescript-eslint/parser',
-  plugins: ['prettier'],
-  extends: ['eslint:recommended', 'plugin:prettier/recommended'],
+  parserOptions: {
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+  },
+  plugins: ['@typescript-eslint', 'prettier'],
   rules: {
     'prettier/prettier': 'error',
   },
-  ignorePatterns: ['!.lintstagedrc.js', '!.eslintrc.js'],
-
-  // plugins: ['@typescript-eslint/eslint-plugin','prettier'], // prettier 一定要是最后一个，才能确保覆盖
-  // rules: {
-  //   'prettier/prettier': 'error',
-  // },
-  // extends: ['plugin:prettier/recommended'],
-  // parserOptions: {
-  //   parser: '@typescript-eslint/parser',
-  //   ecmaVersion: 'latest',
-  //   sourceType: 'module',
-  // },
-  // ignorePatterns: ['!.lintstagedrc.js'],
 }

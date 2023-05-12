@@ -83,6 +83,7 @@ export class SpectrogramGridLayer {
    * @param endFreq 终点频率
    */
   public setFreqRange(startFreq: number, endFreq: number) {
+    this.ctxAxis.clearRect(0, 0, this.parentDom.clientWidth, this.parentDom.clientHeight)
     this.startFreqView = startFreq
     this.endFreqView = endFreq
     this.ctxAxis.fillText(`${startFreq}-${endFreq}`, 0, this.canvasAxis.height - 50)
@@ -94,9 +95,10 @@ export class SpectrogramGridLayer {
    * @param highLevel 高点电平 dbm
    */
   public setViewLevel(lowLevel: number, highLevel: number) {
+    this.ctxMarker.clearRect(0, 0, this.parentDom.clientWidth, this.parentDom.clientHeight)
     this.lowLevel = lowLevel
     this.highLevel = highLevel
-    this.ctxAxis.fillText(`${highLevel}-${lowLevel}`, 0, 100)
+    this.ctxMarker.fillText(`${highLevel}-${lowLevel}`, 0, 100)
     // this.reDrawAxis()
   }
   /** 重绘坐标轴 */

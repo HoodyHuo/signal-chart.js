@@ -1,5 +1,5 @@
 import { SpectrogramThreeLayer } from './SpectrogramThreeLayer'
-import { KeepMode, Marker, mergeDefaultOption, SpectrogramOptions } from './SpectrogramCommon'
+import { KeepMode, mergeDefaultOption, SpectrogramOptions } from './SpectrogramCommon'
 import { SpectrogramGridLayer } from './SpectrogramGridLayer'
 import { Position } from '../common'
 
@@ -114,7 +114,7 @@ export class Spectrogram {
    */
   public update(data: Float32Array) {
     if (data.length !== this.threeLayer.data.length) {
-      this.resizeData(data)
+      // this.resizeData(data)
     }
     this.threeLayer.update(data)
   }

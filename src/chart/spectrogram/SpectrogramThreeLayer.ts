@@ -30,12 +30,12 @@ export class SpectrogramThreeLayer extends Gram {
   /** ------------------------ 数据图形 ------------------------------- */
 
   /** 当前视图低电平 */
-  private lowLevel: number = -150
+  private lowLevel: number
   /** 当前视图高电平 */
-  private highLevel: number = 30
+  private highLevel: number
 
-  private viewLeft: number = 0
-  private viewRight: number = 10000
+  private viewLeft: number
+  private viewRight: number
 
   //线条
   private lineMaterial: THREE.LineBasicMaterial
@@ -178,14 +178,14 @@ export class SpectrogramThreeLayer extends Gram {
         yMaxIndex = i
       }
     }
-    let yMIn = new THREE.Vector3(
+    const yMIn = new THREE.Vector3(
       this.drawData[yMinIndex * 3],
       this.drawData[yMinIndex * 3 + 1],
       this.drawData[yMinIndex * 3 + 2],
     ).project(this.camera)
     const yminP = (-yMIn.y * this.dom.clientHeight) / 2 + this.dom.clientHeight / 2
 
-    let yMAn = new THREE.Vector3(
+    const yMAn = new THREE.Vector3(
       this.drawData[yMaxIndex * 3],
       this.drawData[yMaxIndex * 3 + 1],
       this.drawData[yMaxIndex * 3 + 2],
@@ -193,9 +193,9 @@ export class SpectrogramThreeLayer extends Gram {
     const ymaxP = (-yMAn.y * this.dom.clientHeight) / 2 + this.dom.clientHeight / 2
 
     /** X 最大 */
-    let p = new THREE.Vector3(this.drawData[0], this.drawData[1], this.drawData[2]).project(this.camera)
+    const p = new THREE.Vector3(this.drawData[0], this.drawData[1], this.drawData[2]).project(this.camera)
     const xmin = (p.x * this.dom.clientWidth) / 2 + this.dom.clientWidth / 2
-    let p2 = new THREE.Vector3(
+    const p2 = new THREE.Vector3(
       this.drawData[this.drawData.length - 3],
       this.drawData[this.drawData.length - 2],
       this.drawData[this.drawData.length - 1],

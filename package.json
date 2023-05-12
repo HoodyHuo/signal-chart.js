@@ -10,6 +10,7 @@
     "prettier": "prettier --write .",
     "prepare": "husky install",
     "lint": "eslint --fix",
+    "format": "npm run lint && npm run prettier",
     "test": "echo \"Error: no test specified\" && exit 1",
     "clean:lib": "rimraf lib",
     "build:types": "npm run clean:lib && tsc -b ./tsconfig.types.json",
