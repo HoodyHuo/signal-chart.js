@@ -25,11 +25,6 @@ const config = {
       file: pkg.module,
       format: 'es',
     },
-    {
-      // package.json 配置的 module 属性
-      file: pkg.main,
-      format: 'es',
-    },
     // umd
     {
       // umd 导出文件的全局变量
