@@ -1,6 +1,6 @@
 import Gram from './Gram'
 import * as THREE from 'three'
-import { Queue } from '@/tool/stats/Queue'
+import { Queue } from '../../tool/Queue'
 import { Plane } from 'three'
 import { convertToDrawData, KeepMode, SpectrogramOptions } from './SpectrogramCommon'
 import { Position } from '../common'

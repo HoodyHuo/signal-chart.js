@@ -1,7 +1,7 @@
 import Stats from './../../tool/stats/stats'
 import * as THREE from 'three'
 import { GramOptions } from './SpectrogramCommon'
-export default abstract class Gram {
+export abstract class Gram {
   dom: HTMLElement
   renderer: THREE.WebGLRenderer
   scene: THREE.Scene
@@ -83,3 +83,4 @@ export default abstract class Gram {
     return camera
   }
 }
+export default Gram
