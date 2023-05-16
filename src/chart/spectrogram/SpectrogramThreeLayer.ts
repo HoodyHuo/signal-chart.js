@@ -155,10 +155,10 @@ export class SpectrogramThreeLayer extends Gram {
     const leftTop = this.translateToWorld(0, 0)
     const rightBottom = this.translateToWorld(this.dom.clientWidth, this.dom.clientHeight)
     return {
-      top: leftTop.y,
-      bottom: rightBottom.y,
-      left: leftTop.x,
-      right: rightBottom.x,
+      top: Math.round(leftTop.y),
+      bottom: Math.round(rightBottom.y),
+      left: Math.round(leftTop.x),
+      right: Math.round(rightBottom.x),
     }
   }
 

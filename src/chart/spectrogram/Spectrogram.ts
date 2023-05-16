@@ -2,6 +2,7 @@ import { SpectrogramThreeLayer } from './SpectrogramThreeLayer'
 import { KeepMode, mergeDefaultOption, SpectrogramOptions } from './SpectrogramCommon'
 import { SpectrogramGridLayer } from './SpectrogramGridLayer'
 import { Position } from '../common'
+import Throttle from '../../tool/Throttle'
 
 // 坐标轴中箭头的宽和高
 const arrow = {
@@ -45,7 +46,37 @@ export class Spectrogram {
       x: fullOptions.HORIZONTAL_AXIS_MARGIN,
       y: fullOptions.VERTICAL_AXIS_MARGIN,
     }
+
+    this.registeEvent()
   }
+
+  private registeEvent() {
+    // 注册鼠标滚轮缩放
+    const scaleThrottle = new Throttle(50)
+    this.dom.addEventListener('mousewheel', (event: Event) => {
+      scaleThrottle.run(() => {
+        const e = event as WheelEvent // 强制类型为 滚动鼠标事件
+        const p = Math.round(this.getPointValue(e.offsetX, e.offsetY).x) //获取当前鼠标数据位置
+        const delta = e.deltaY > 0 ? 1.5 : 0.6 // 获取滚轮量 100 或-100
+        this.scaleH(p, delta)
+      })
+    })
+  }
+  /**
+   * 横向缩放图谱
+   * @param x 鼠标聚焦频点
+   * @param delta 缩放比例
+   */
+  public scaleH(x: number, delta: number) {
+    const range = this.getBorderValue() //获取当前显示范围
+    const oldLen = range.right - range.left //计算当前显示数量
+    const newLen = Math.round(oldLen * delta)
+    const oldPst = (x - range.left) / oldLen
+    const newLeft = Math.round(x - newLen * oldPst)
+    const newRight = newLeft + newLen
+    this.setViewFreqRange(newLeft < 0 ? 0 : newLeft, newRight > this.endFreq ? this.endFreq : newRight)
+  }
+
   /**
    * 设置总图谱数据的起止频率范围（HZ）
    * @param startFreq 起点频率
