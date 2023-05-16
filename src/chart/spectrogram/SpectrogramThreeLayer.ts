@@ -30,12 +30,12 @@ export class SpectrogramThreeLayer extends Gram {
   /** ------------------------ 数据图形 ------------------------------- */
 
   /** 当前视图低电平 */
-  private lowLevel: number
+  private lowLevel = -150
   /** 当前视图高电平 */
-  private highLevel: number
+  private highLevel = 30
 
-  private viewLeft: number
-  private viewRight: number
+  private viewLeft = 0
+  private viewRight = 10000
 
   //线条
   private lineMaterial: THREE.LineBasicMaterial
