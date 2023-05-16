@@ -16,13 +16,18 @@ const config = {
     // commonjs
     {
       // package.json 配置的 main 属性
-      file: pkg.main,
+      file: pkg.cmd,
       format: 'cjs',
     },
     // es module
     {
       // package.json 配置的 module 属性
       file: pkg.module,
+      format: 'es',
+    },
+    {
+      // package.json 配置的 module 属性
+      file: pkg.main,
       format: 'es',
     },
     // umd
