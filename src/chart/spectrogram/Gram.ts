@@ -32,7 +32,6 @@ export abstract class Gram {
   public update(data: Float32Array): void {
     this.stats.begin() // 开始记录绘制
     this.updateData(data) //子类实现绘制方法
-    this.renderer.render(this.scene, this.camera) // 渲染更新
     this.stats.end() //记录停止绘制时间
   }
   /**

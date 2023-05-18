@@ -52,14 +52,11 @@ export class Spectrogram {
 
   private registeEvent() {
     // 注册鼠标滚轮缩放
-    const scaleThrottle = new Throttle(50)
     this.dom.addEventListener('mousewheel', (event: Event) => {
-      scaleThrottle.run(() => {
-        const e = event as WheelEvent // 强制类型为 滚动鼠标事件
-        const p = Math.round(this.getPointValue(e.offsetX, e.offsetY).x) //获取当前鼠标数据位置
-        const delta = e.deltaY > 0 ? 1.5 : 0.6 // 获取滚轮量 100 或-100
-        this.scaleH(p, delta)
-      })
+      const e = event as WheelEvent // 强制类型为 滚动鼠标事件
+      const p = Math.round(this.getPointValue(e.offsetX, e.offsetY).x) //获取当前鼠标数据位置
+      const delta = e.deltaY > 0 ? 1.5 : 0.6 // 获取滚轮量 100 或-100
+      this.scaleH(p, delta)
     })
   }
   /**

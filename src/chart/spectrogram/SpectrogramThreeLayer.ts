@@ -99,9 +99,16 @@ export class SpectrogramThreeLayer extends Gram {
     // 缩放数据到合适窗口
     const { left, right } = this.getBorderValue() //获取比例为1当前屏幕的显示范围
     const scale = (endX - startX) / (right - left) // 计算要显示的范围和当前的比例
-    this.camera.scale.set(scale, this.camera.scale.y, 1) //设置缩放
+    this.camera.scale.setX(scale) //设置缩放
+    this.camera.updateMatrixWorld() //立即更新
+    this.render()
   }
-
+  render() {
+    if (this.lineGeometry.attributes.position) {
+      this.lineGeometry.attributes.position.needsUpdate = true
+      this.renderer.render(this.scene, this.camera) // 渲染更新
+    }
+  }
   /**
    * 设置当前显示区域的电平范围
    * @param lowLevel 低点电平 dbm
@@ -118,7 +125,9 @@ export class SpectrogramThreeLayer extends Gram {
     // 缩放数据到合适窗口
     const { top, bottom } = this.getBorderValue() //获取比例为1当前屏幕的显示范围
     const scale = (highLevel - lowLevel) / (top - bottom) // 计算要显示的范围和当前的比例
-    this.camera.scale.set(this.camera.scale.x, scale, 1) //设置缩放
+    this.camera.scale.setY(scale) //设置缩放
+    this.camera.updateMatrixWorld() //立即更新
+    this.render()
   }
   getViewCenter(): Position {
     return {
@@ -216,7 +225,7 @@ export class SpectrogramThreeLayer extends Gram {
     // 填充当前帧数据到绘制数据里
     convertToDrawData(this.drawData, this.data)
     // 标记图形需要更新
-    this.lineGeometry.attributes.position.needsUpdate = true
+    this.render()
   }
 
   /**
