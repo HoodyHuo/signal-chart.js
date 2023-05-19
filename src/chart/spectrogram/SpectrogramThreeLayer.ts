@@ -9,6 +9,7 @@ import { Position } from '../common'
  * 频谱图Threejs组件
  */
 export class SpectrogramThreeLayer extends Gram {
+  private options: SpectrogramOptions
   /** ------------------------ 信号 ------------------------------- */
   /** 保持模式 */
   protected keepMode: KeepMode
@@ -38,12 +39,7 @@ export class SpectrogramThreeLayer extends Gram {
   private viewRight = 10000
 
   //线条
-  private lineMaterial: THREE.LineBasicMaterial
   private line: THREE.Line
-
-  //  创建缓存几何体
-  private lineGeometry: THREE.BufferGeometry
-
   /** ------------------------ 辅助 ------------------------------- */
   /**投影射线工具 */
   private raycaster: THREE.Raycaster = new THREE.Raycaster()
@@ -54,27 +50,20 @@ export class SpectrogramThreeLayer extends Gram {
    */
   constructor(options: SpectrogramOptions) {
     super(options)
+    this.options = options
     this.keepMode = options.keepMode
     /**创建帧缓存 */
     this.recentCache = new Queue<Float32Array>(options.cacheCount)
 
     /** --------------------------初始化频谱线图层-------------------------------- */
-    //构建线几何体（缓冲型）
-    this.lineGeometry = new THREE.BufferGeometry()
 
-    //构建线材质
-    this.lineMaterial = new THREE.LineBasicMaterial({
-      color: options.color.line,
-    })
-    //构建线
-    this.line = new THREE.Line(this.lineGeometry, this.lineMaterial)
-    this.scene.add(this.line)
     this.renderer.setClearColor(options.color.background, 1.0)
 
     const a = new THREE.AxesHelper(10000)
     a.position.set(0, 0, 0)
     this.scene.add(a)
 
+    this.resizeData(options.fftLen)
     // new OrbitControls(this.camera, this.dom)
   }
 
@@ -104,8 +93,8 @@ export class SpectrogramThreeLayer extends Gram {
     this.render()
   }
   render() {
-    if (this.lineGeometry.attributes.position) {
-      this.lineGeometry.attributes.position.needsUpdate = true
+    if (this.line.geometry.attributes.position) {
+      this.line.geometry.attributes.position.needsUpdate = true
       this.renderer.render(this.scene, this.camera) // 渲染更新
     }
   }
@@ -216,9 +205,6 @@ export class SpectrogramThreeLayer extends Gram {
 
   protected updateData(data: Float32Array): void {
     //判断绘制数据尺寸是否变化，如果变化则调整缓存尺寸
-    if (data.length != this.drawCount) {
-      this.resizeData(data)
-    }
     //通过处理，构建当前帧数据
     this.preprocessingDataForKeepMode(data)
 
@@ -230,10 +216,11 @@ export class SpectrogramThreeLayer extends Gram {
 
   /**
    * 重新设置数据长度，计算起止频点映射关系
-   * @param data 新数据
+   * @param drawCount 新数据
    */
-  public resizeData(data: Float32Array) {
-    this.drawCount = data.length
+  public resizeData(drawCount: number) {
+    console.log('resize', drawCount)
+    this.drawCount = drawCount
     this.clearDataCache(this.keepMode, this.drawCount)
   }
 
@@ -264,10 +251,10 @@ export class SpectrogramThreeLayer extends Gram {
     // 重新构造当前初始化的帧数
     this.data = new Float32Array(pointCount)
     this.drawData = new Float32Array(pointCount * 3)
-
-    this.lineGeometry.setAttribute('position', new THREE.BufferAttribute(this.drawData, 3))
-    // drawcalls 设置绘制 点数，
-    this.lineGeometry.setDrawRange(0, pointCount)
+    //移除并添加新的线
+    this.scene.remove(this.line)
+    this.line = this.createLine(pointCount, this.drawData)
+    this.scene.add(this.line)
   }
   /**
    * 根据保持模式进行数据预处理
@@ -307,5 +294,26 @@ export class SpectrogramThreeLayer extends Gram {
         this.data = data
         break
     }
+  }
+  /**
+   * 创建线段对象
+   * @param fftLen 线段点数既FFT长度
+   * @param drawData 线段定点缓冲数组 3倍fftlen
+   * @returns Line对象
+   */
+  private createLine(fftLen: number, drawData: Float32Array): THREE.Line {
+    //构建线几何体（缓冲型）
+    const lineGeometry = new THREE.BufferGeometry()
+
+    //构建线材质
+    const lineMaterial = new THREE.LineBasicMaterial({
+      color: this.options.color.line,
+    })
+    lineGeometry.setAttribute('position', new THREE.BufferAttribute(drawData, 3))
+    // drawcalls 设置绘制 点数，
+    lineGeometry.setDrawRange(0, fftLen)
+    //构建线
+    const line = new THREE.Line(lineGeometry, lineMaterial)
+    return line
   }
 }

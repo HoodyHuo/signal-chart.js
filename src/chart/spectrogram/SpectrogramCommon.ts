@@ -11,10 +11,14 @@ export enum KeepMode {
 }
 
 export interface GramOptions {
-  Performance: boolean // 是否打开性能监视窗口
-  El: HTMLElement // 图形绘制节点
-  HORIZONTAL_AXIS_MARGIN?: number // Y轴与canvas的距离px
-  VERTICAL_AXIS_MARGIN?: number //X轴标尺与canvas的距离px
+  /** 是否打开性能监视窗口 */
+  Performance: boolean
+  /** 图形绘制节点 */
+  El: HTMLElement
+  /** Y轴与canvas的距离px */
+  HORIZONTAL_AXIS_MARGIN?: number
+  /** X轴标尺与canvas的距离px */
+  VERTICAL_AXIS_MARGIN?: number
 }
 
 export type Marker = {
@@ -53,15 +57,21 @@ export interface Color {
  * 频谱图配置参数
  */
 export interface SpectrogramOptions extends GramOptions {
+  /** 保持模式 */
   keepMode?: KeepMode
+  /** 缓存帧数 */
   cacheCount?: number
+  /**颜色配置 */
   color?: Color
+  /**FFT 数组长度 */
+  fftLen?: number
 }
 
 export function mergeDefaultOption(options: SpectrogramOptions): SpectrogramOptions {
   const defaultOption = {
     El: document.body,
     Performance: false,
+    fftLen: 1000,
     HORIZONTAL_AXIS_MARGIN: 50,
     VERTICAL_AXIS_MARGIN: 50,
     keepMode: KeepMode.CLEAN,
@@ -74,7 +84,6 @@ export function mergeDefaultOption(options: SpectrogramOptions): SpectrogramOpti
       line: '#00ff01', // 折线色
     },
   }
-
   Object.assign(defaultOption, options)
   return defaultOption
 }

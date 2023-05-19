@@ -142,7 +142,7 @@ export class Spectrogram {
    */
   public update(data: Float32Array) {
     if (data.length !== this.threeLayer.data.length) {
-      // this.resizeData(data)
+      this.threeLayer.resizeData(data.length)
     }
     this.threeLayer.update(data)
   }
