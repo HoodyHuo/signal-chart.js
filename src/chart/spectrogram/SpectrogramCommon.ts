@@ -71,7 +71,7 @@ export function mergeDefaultOption(options: SpectrogramOptions): SpectrogramOpti
   const defaultOption = {
     El: document.body,
     Performance: false,
-    fftLen: 1000,
+    fftLen: 4800,
     HORIZONTAL_AXIS_MARGIN: 50,
     VERTICAL_AXIS_MARGIN: 50,
     keepMode: KeepMode.CLEAN,
@@ -79,9 +79,9 @@ export function mergeDefaultOption(options: SpectrogramOptions): SpectrogramOpti
     color: {
       grid: '#555555', // 背景网格颜色
       background: '#000000', // 背景色
-      axis: '#ffffff', // 轴色
-      label: '#ffffff', // 轴标签色
-      line: '#00ff01', // 折线色
+      axis: '#18fa36', // 轴色
+      label: '#18fa36', // 轴标签色
+      line: '#18fa36', // 折线色
     },
   }
   Object.assign(defaultOption, options)

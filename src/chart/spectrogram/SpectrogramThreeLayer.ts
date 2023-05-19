@@ -20,7 +20,7 @@ export class SpectrogramThreeLayer extends Gram {
   /**当前帧绘制数据（threejs） */
   protected drawData: Float32Array
   /**绘制点数 */
-  protected drawCount: number
+  public drawCount: number
   /** 缓存，保存了最近N包的数据 */
   protected recentCache: Queue<Float32Array>
   /** 保持缓冲区 */
@@ -62,7 +62,6 @@ export class SpectrogramThreeLayer extends Gram {
     const a = new THREE.AxesHelper(10000)
     a.position.set(0, 0, 0)
     this.scene.add(a)
-
     this.resizeData(options.fftLen)
     // new OrbitControls(this.camera, this.dom)
   }
@@ -251,6 +250,7 @@ export class SpectrogramThreeLayer extends Gram {
     // 重新构造当前初始化的帧数
     this.data = new Float32Array(pointCount)
     this.drawData = new Float32Array(pointCount * 3)
+    convertToDrawData(this.drawData, new Float32Array(pointCount).fill(-180))
     //移除并添加新的线
     this.scene.remove(this.line)
     this.line = this.createLine(pointCount, this.drawData)

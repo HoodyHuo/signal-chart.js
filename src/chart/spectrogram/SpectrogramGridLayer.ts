@@ -64,7 +64,7 @@ export class SpectrogramGridLayer {
   }
 
   draw(xmin: number, xmax: number, ymax: number, ymin: number) {
-    this.ctxAxis.strokeStyle = '#FFFFFF'
+    this.ctxAxis.strokeStyle = '#18fa36'
     this.ctxAxis.lineWidth = 10
     this.ctxAxis.clearRect(0, 0, this.parentDom.clientWidth, this.parentDom.clientHeight)
     this.ctxAxis.beginPath()
@@ -86,6 +86,7 @@ export class SpectrogramGridLayer {
     this.ctxAxis.clearRect(0, 0, this.parentDom.clientWidth, this.parentDom.clientHeight)
     this.startFreqView = startFreq
     this.endFreqView = endFreq
+    this.ctxAxis.fillStyle = '#18fa36'
     this.ctxAxis.fillText(`${startFreq}-${endFreq}`, 0, this.canvasAxis.height - 50)
     // this.reDrawAxis()
   }
@@ -98,6 +99,7 @@ export class SpectrogramGridLayer {
     this.ctxMarker.clearRect(0, 0, this.parentDom.clientWidth, this.parentDom.clientHeight)
     this.lowLevel = lowLevel
     this.highLevel = highLevel
+    this.ctxMarker.fillStyle = '#18fa36'
     this.ctxMarker.fillText(`${highLevel}-${lowLevel}`, 0, 100)
     // this.reDrawAxis()
   }

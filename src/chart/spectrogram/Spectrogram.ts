@@ -2,13 +2,7 @@ import { SpectrogramThreeLayer } from './SpectrogramThreeLayer'
 import { KeepMode, mergeDefaultOption, SpectrogramOptions } from './SpectrogramCommon'
 import { SpectrogramGridLayer } from './SpectrogramGridLayer'
 import { Position } from '../common'
-import Throttle from '../../tool/Throttle'
 
-// 坐标轴中箭头的宽和高
-const arrow = {
-  width: 12,
-  height: 20,
-}
 /**频谱网格图层 */
 export class Spectrogram {
   /**------------------------图谱属性--------------------------------- */
@@ -25,6 +19,15 @@ export class Spectrogram {
   /** 数据终止频率 */
   private endFreq: number
 
+  /** 当前视图起点频率 */
+  private startFreqView: number
+  /** 当前视图终止频率 */
+  private endFreqView: number
+
+  /** 当前视图低电平 */
+  private lowLevel: number
+  /** 当前视图高电平 */
+  private highLevel: number
   /**------------------------图像绘制层--------------------------------- */
 
   private AXIS_ORIGIN: { x: number; y: number }
@@ -43,8 +46,8 @@ export class Spectrogram {
 
     // 标尺原点，以此为起点
     this.AXIS_ORIGIN = {
-      x: fullOptions.HORIZONTAL_AXIS_MARGIN,
-      y: fullOptions.VERTICAL_AXIS_MARGIN,
+      x: fullOptions.HORIZONTAL_AXIS_MARGIN ?? 50,
+      y: fullOptions.VERTICAL_AXIS_MARGIN ?? 50,
     }
 
     this.registeEvent()
@@ -54,24 +57,32 @@ export class Spectrogram {
     // 注册鼠标滚轮缩放
     this.dom.addEventListener('mousewheel', (event: Event) => {
       const e = event as WheelEvent // 强制类型为 滚动鼠标事件
-      const p = Math.round(this.getPointValue(e.offsetX, e.offsetY).x) //获取当前鼠标数据位置
+      const p = Math.round(this.getMarkerValue(e.offsetX, e.offsetY).x) //获取当前鼠标数据位置
       const delta = e.deltaY > 0 ? 1.5 : 0.6 // 获取滚轮量 100 或-100
       this.scaleH(p, delta)
+    })
+    this.dom.addEventListener('mousemove', (event: Event) => {
+      const e = event as MouseEvent // 强制类型为 滚动鼠标事件
+      const p = this.getMarkerValue(e.offsetX, e.offsetY) //获取当前鼠标数据位置
+      console.log(p)
     })
   }
   /**
    * 横向缩放图谱
-   * @param x 鼠标聚焦频点
+   * @param freq 鼠标聚焦频点
    * @param delta 缩放比例
    */
-  public scaleH(x: number, delta: number) {
+  public scaleH(freq: number, delta: number) {
     const range = this.getBorderValue() //获取当前显示范围
     const oldLen = range.right - range.left //计算当前显示数量
     const newLen = Math.round(oldLen * delta)
-    const oldPst = (x - range.left) / oldLen
-    const newLeft = Math.round(x - newLen * oldPst)
+    const oldPst = (freq - range.left) / oldLen
+    const newLeft = Math.round(freq - newLen * oldPst)
     const newRight = newLeft + newLen
-    this.setViewFreqRange(newLeft < 0 ? 0 : newLeft, newRight > this.endFreq ? this.endFreq : newRight)
+    this.setViewFreqRange(
+      newLeft < this.startFreq ? this.startFreq : newLeft,
+      newRight > this.endFreq ? this.endFreq : newRight,
+    )
   }
 
   /**
@@ -98,6 +109,8 @@ export class Spectrogram {
     const endIndex: number = this.getDataIndexByFreq(endFreq)
     this.threeLayer.setViewRange(starIndex, endIndex)
     this.gridLayer.setFreqRange(startFreq, endFreq)
+    this.startFreqView = startFreq
+    this.endFreqView = endFreq
   }
   /**
    * 设置当前图谱展示的电平值范围
@@ -119,17 +132,28 @@ export class Spectrogram {
    */
   public getDataIndexByFreq(freq: number): number {
     const abs = this.endFreq - this.startFreq
-    return Math.round(((freq - this.startFreq) * 4800) / abs)
+    return ((freq - this.startFreq) / abs) * this.threeLayer.drawCount
   }
 
   /**
-   * 通过dom上的dom元素的左上坐标系位置获取世界坐标系的X,Y
+   * 通过屏幕坐标系位置获取对应marker的频率和电平
    * @param x  x
    * @param y  y
-   * @returns
+   * @returns Hz,dBm
    */
-  public getPointValue(x: number, y: number): Position {
-    return this.threeLayer.translateToWorld(x, y)
+  public getMarkerValue(x: number, y: number): Position {
+    const indexP = this.threeLayer.translateToWorld(x, y)
+    if (!indexP) {
+      throw new Error(`getMarkerValue (${x},${y}) not found value`)
+    }
+    return {
+      x: this.startFreq + indexP.x * this.getFreqPrePoint(),
+      y: indexP.y,
+    }
+  }
+
+  private getFreqPrePoint() {
+    return (this.endFreq - this.startFreq) / this.threeLayer.drawCount
   }
 
   public setKeepMode(mode: KeepMode) {
@@ -143,15 +167,24 @@ export class Spectrogram {
   public update(data: Float32Array) {
     if (data.length !== this.threeLayer.data.length) {
       this.threeLayer.resizeData(data.length)
+      this.setViewFreqRange(this.startFreq, this.endFreq)
     }
     this.threeLayer.update(data)
   }
 
   /**
-   * 获取当前缩放状态下的坐标轴范围值
+   * 获取当前缩放状态下的p频率、电平值
+   * @returns { top: number; bottom: number; left: number; right: number }  top: 最大电平; bottom: 最小电平; left: 频率起点; right: 频率终点
    */
   public getBorderValue(): { top: number; bottom: number; left: number; right: number } {
-    return this.threeLayer.getBorderValue()
+    const border = this.threeLayer.getBorderValue()
+    const fpp = this.getFreqPrePoint()
+    return {
+      top: border.top,
+      bottom: border.bottom,
+      left: border.left * fpp + this.startFreq,
+      right: border.right * fpp + this.startFreq,
+    }
   }
 
   /** 临时函数，用于绘制线图的包围框 */
