@@ -11,13 +11,23 @@ export abstract class Gram {
   stats: Stats
 
   constructor(options: GramOptions) {
-    this.dom = options.El
-    this.dom.style.position = 'relative'
-    this.stats = this.initStateMonitor(options.El, options.Performance)
+    this.dom = document.createElement('div')
+
+    const str = `
+    height:${options.El.clientHeight - options.VERTICAL_AXIS_MARGIN}px;
+    width: ${options.El.clientWidth - options.HORIZONTAL_AXIS_MARGIN}px;
+    position: absolute;
+    top: 0px;
+    left: ${options.HORIZONTAL_AXIS_MARGIN}px;
+    z-index:510;
+    `
+    this.dom.style.cssText = str
+    options.El.appendChild(this.dom)
+    this.stats = this.initStateMonitor(this.dom, options.Performance)
     this.setStats(options.Performance)
-    this.renderer = this.initRender(options.El)
-    this.scene = this.initScene(options.El)
-    this.camera = this.initCamera(options.El)
+    this.renderer = this.initRender(this.dom)
+    this.scene = this.initScene(this.dom)
+    this.camera = this.initCamera(this.dom)
   }
   /**
    * 由具体图谱类实现的数据更新

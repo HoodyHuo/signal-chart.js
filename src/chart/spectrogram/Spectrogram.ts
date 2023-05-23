@@ -39,6 +39,8 @@ export class Spectrogram {
     const fullOptions = mergeDefaultOption(options)
 
     this.dom = fullOptions.El
+    this.dom.style.position = 'relative'
+    this.dom.style.backgroundColor = fullOptions.color.background
 
     this.threeLayer = new SpectrogramThreeLayer(fullOptions)
     this.gridLayer = new SpectrogramGridLayer(fullOptions)
@@ -46,8 +48,8 @@ export class Spectrogram {
 
     // 标尺原点，以此为起点
     this.AXIS_ORIGIN = {
-      x: fullOptions.HORIZONTAL_AXIS_MARGIN ?? 50,
-      y: fullOptions.VERTICAL_AXIS_MARGIN ?? 50,
+      x: fullOptions.HORIZONTAL_AXIS_MARGIN,
+      y: fullOptions.VERTICAL_AXIS_MARGIN,
     }
 
     this.registeEvent()
@@ -57,13 +59,13 @@ export class Spectrogram {
     // 注册鼠标滚轮缩放
     this.dom.addEventListener('mousewheel', (event: Event) => {
       const e = event as WheelEvent // 强制类型为 滚动鼠标事件
-      const p = Math.round(this.getMarkerValue(e.offsetX, e.offsetY).x) //获取当前鼠标数据位置
+      const p = Math.round(this.getMarkerValue(e.offsetX - this.AXIS_ORIGIN.x, e.offsetY).x) //获取当前鼠标数据位置
       const delta = e.deltaY > 0 ? 1.5 : 0.6 // 获取滚轮量 100 或-100
       this.scaleH(p, delta)
     })
     this.dom.addEventListener('mousemove', (event: Event) => {
       const e = event as MouseEvent // 强制类型为 滚动鼠标事件
-      const p = this.getMarkerValue(e.offsetX, e.offsetY) //获取当前鼠标数据位置
+      const p = this.getMarkerValue(e.offsetX - this.AXIS_ORIGIN.x, e.offsetY) //获取当前鼠标数据位置
       console.log(p)
     })
   }

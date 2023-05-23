@@ -66,7 +66,6 @@ export interface SpectrogramOptions extends GramOptions {
   /**FFT 数组长度 */
   fftLen?: number
 }
-
 export function mergeDefaultOption(options: SpectrogramOptions): SpectrogramOptions {
   const defaultOption = {
     El: document.body,
@@ -79,9 +78,9 @@ export function mergeDefaultOption(options: SpectrogramOptions): SpectrogramOpti
     color: {
       grid: '#555555', // 背景网格颜色
       background: '#000000', // 背景色
-      axis: '#18fa36', // 轴色
-      label: '#18fa36', // 轴标签色
-      line: '#18fa36', // 折线色
+      axis: '#FFFFFF', // 轴色
+      label: '#FFFFFF', // 轴标签色
+      line: '#3ed630', // 折线色
     },
   }
   Object.assign(defaultOption, options)

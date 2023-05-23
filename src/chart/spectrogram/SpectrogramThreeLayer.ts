@@ -57,8 +57,6 @@ export class SpectrogramThreeLayer extends Gram {
 
     /** --------------------------初始化频谱线图层-------------------------------- */
 
-    this.renderer.setClearColor(options.color.background, 1.0)
-
     const a = new THREE.AxesHelper(10000)
     a.position.set(0, 0, 0)
     this.scene.add(a)
