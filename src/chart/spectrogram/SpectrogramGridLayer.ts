@@ -36,16 +36,21 @@ export class SpectrogramGridLayer {
   private ctxAxisY: CanvasRenderingContext2D
 
   AXIS_ORIGIN: { x: number; y: number }
-
+  /**
+   * 创建网格缓存数组，用于绘制网格
+   * @param gridCache 缓存数组
+   * @param x x轴数组
+   * @param y y轴数组
+   */
   gridCache: { x: number[]; y: number[] }
 
   constructor(options: SpectrogramOptions) {
     this.parentDom = options.El
+    /** 初始化网格绘制数组 */
     this.gridCache = {
       x: [],
       y: [],
     }
-
     /** 创建网格图层 */
     this.canvasAxis = this.makeCanvas(500)
     this.parentDom.appendChild(this.canvasAxis)
@@ -92,20 +97,6 @@ export class SpectrogramGridLayer {
     })
   }
 
-  draw(xmin: number, xmax: number, ymax: number, ymin: number) {
-    this.ctxGrid.strokeStyle = '#18fa36'
-    this.ctxGrid.lineWidth = 10
-    this.ctxGrid.clearRect(0, 0, this.parentDom.clientWidth, this.parentDom.clientHeight)
-    this.ctxGrid.beginPath()
-    this.ctxGrid.moveTo(xmax, ymax)
-    this.ctxGrid.lineTo(xmax, ymin)
-    this.ctxGrid.lineTo(xmin, ymin)
-    this.ctxGrid.lineTo(xmin, ymax)
-    this.ctxGrid.lineTo(xmax, ymax)
-    this.ctxGrid.stroke()
-    this.ctxGrid.fill()
-  }
-
   /**
    * 设置图谱显示范围的起止频率范围（HZ）
    * @param startFreq 起点频率
@@ -137,24 +128,24 @@ export class SpectrogramGridLayer {
   /** 重绘坐标轴 */
   private reDrawAxis() {
     this.clear(this.ctxGrid)
+    /** 绘制x轴 */
     this.ctxGrid.beginPath()
     this.ctxGrid.moveTo(this.AXIS_ORIGIN.x, 0)
     this.ctxGrid.lineTo(this.AXIS_ORIGIN.x, this.parentDom.clientHeight - this.AXIS_ORIGIN.y)
-
+    /** 绘制y轴 */
     this.ctxGrid.moveTo(0, this.parentDom.clientHeight - this.AXIS_ORIGIN.y)
     this.ctxGrid.lineTo(this.parentDom.clientWidth, this.parentDom.clientHeight - this.AXIS_ORIGIN.y)
     this.ctxGrid.stroke()
-
+    /** 绘制x轴上的竖线 */
     this.gridCache.x.forEach((w) => {
       this.ctxGrid.moveTo(w, this.parentDom.clientHeight - this.AXIS_ORIGIN.y)
       this.ctxGrid.lineTo(w, 0)
     })
-
+    /** 绘制y轴上的竖线 */
     this.gridCache.y.forEach((h) => {
       this.ctxGrid.moveTo(this.AXIS_ORIGIN.x, h)
       this.ctxGrid.lineTo(this.parentDom.clientWidth, h)
     })
-
     this.ctxGrid.stroke()
   }
   /**
@@ -200,7 +191,7 @@ export class SpectrogramGridLayer {
     const xArr: { scaleX: number; scaleText: number }[] = numberXArr.map((item, index) => {
       if (index == 0) {
         return {
-          scaleX: 0,
+          scaleX: this.AXIS_ORIGIN.x,
           scaleText: item,
         }
       } else {
@@ -210,6 +201,7 @@ export class SpectrogramGridLayer {
         }
       }
     })
+    /* 初始化x轴 */
     this.gridCache.x = []
     xArr.forEach((item) => {
       this.ctxAxisX.beginPath()
@@ -265,7 +257,7 @@ export class SpectrogramGridLayer {
     numberXArr.reverse()
     /* 计算第一个刻度所在的位置对应的px值 */
     const oneAxisPx = Math.abs(numberXArr[0] - numberXArr[1]) / pxKhz
-    const xArr: { scaleY: number; scaleText: number }[] = numberXArr.map((item, index) => {
+    const yArr: { scaleY: number; scaleText: number }[] = numberXArr.map((item, index) => {
       if (index == 0) {
         return {
           scaleY: 0,
@@ -273,17 +265,18 @@ export class SpectrogramGridLayer {
         }
       } else {
         return {
-          scaleY: +oneAxisPx + (gridInterval / pxKhz) * (index - 1),
+          scaleY: oneAxisPx + (gridInterval / pxKhz) * (index - 1),
           scaleText: item,
         }
       }
     })
+    // 初始化存放y轴的缓存数据
     this.gridCache.y = []
-    xArr.forEach((item) => {
+    yArr.forEach((item) => {
       this.ctxAxisY.beginPath()
       this.ctxAxisY.moveTo(this.AXIS_ORIGIN.x, item.scaleY)
       this.ctxAxisY.lineTo(15 + this.AXIS_ORIGIN.x, item.scaleY)
-      this.ctxAxisY.fillText(`${item.scaleText}dbm`, 15, item.scaleY)
+      this.ctxAxisY.fillText(`${item.scaleText}dbm`, 5, item.scaleY + 3)
       this.ctxAxisY.stroke()
       this.ctxAxisY.fill()
       this.gridCache.y.push(item.scaleY)

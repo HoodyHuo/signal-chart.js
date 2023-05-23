@@ -192,6 +192,5 @@ export class Spectrogram {
   /** 临时函数，用于绘制线图的包围框 */
   public getProject() {
     const p = this.threeLayer.getProject()
-    this.gridLayer.draw(p.xmin, p.xmax, p.ymaxP, p.yminP)
   }
 }
