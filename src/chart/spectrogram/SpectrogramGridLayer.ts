@@ -34,7 +34,14 @@ export class SpectrogramGridLayer {
   private ctxMarker: CanvasRenderingContext2D
   private ctxAxisX: CanvasRenderingContext2D
   private ctxAxisY: CanvasRenderingContext2D
-
+  /** 记录初始最小频率 */
+  private minFreq: number
+  /** 记录初始最大频率 */
+  private maxFreq: number
+  /** 记录初始最小电平 */
+  private minLevel: number
+  /** 记录初始最大电平 */
+  private maxLevel: number
   AXIS_ORIGIN: { x: number; y: number }
   /**
    * 创建网格缓存数组，用于绘制网格
@@ -57,14 +64,14 @@ export class SpectrogramGridLayer {
     this.ctxGrid = this.canvasAxis.getContext('2d')
     this.ctxGrid.strokeStyle = options.color.grid
     /** 创建X轴图层 */
-    this.canvasAxisX = this.makeCanvas(520)
+    this.canvasAxisX = this.makeCanvas(501)
     this.parentDom.appendChild(this.canvasAxisX)
     this.ctxAxisX = this.canvasAxisX.getContext('2d')
     this.ctxAxisX.strokeStyle = options.color.axis
     this.ctxAxisX.fillStyle = options.color.label
     this.ctxAxisX.lineWidth = 2
     /** 创建Y轴图层 */
-    this.canvasAxisY = this.makeCanvas(520)
+    this.canvasAxisY = this.makeCanvas(502)
     this.parentDom.appendChild(this.canvasAxisY)
     this.ctxAxisY = this.canvasAxisY.getContext('2d')
     this.ctxAxisY.strokeStyle = options.color.axis
@@ -103,11 +110,18 @@ export class SpectrogramGridLayer {
    * @param endFreq 终点频率
    */
   public setFreqRange(startFreq: number, endFreq: number) {
+    // 初始记录最大频谱值和最小频谱值
+    if (this.minFreq == undefined) {
+      this.minFreq = startFreq
+      this.maxFreq = endFreq
+    }
     this.clear(this.ctxAxisX)
+    this.clear(this.ctxMarker)
     this.startFreqView = startFreq
     this.endFreqView = endFreq
+    this.drawScroll(startFreq, endFreq)
     this.ctxGrid.fillStyle = '#18fa36'
-    this.ctxGrid.fillText(`${startFreq}-${endFreq}`, 0, this.canvasAxis.height - 50)
+    this.ctxGrid.fillText(`${Math.trunc(startFreq)} - ${Math.trunc(startFreq)} `, 0, this.canvasAxis.height - 50)
     this.drawXGrid(startFreq, endFreq)
     this.reDrawAxis()
   }
@@ -117,11 +131,17 @@ export class SpectrogramGridLayer {
    * @param highLevel 高点电平 dbm
    */
   public setViewLevel(lowLevel: number, highLevel: number) {
+    // 初始记录最大频谱值和最小频谱值
+    if (this.minLevel == undefined) {
+      this.minLevel = lowLevel
+      this.maxLevel = highLevel
+    }
     this.clear(this.ctxAxisY)
     this.lowLevel = lowLevel
     this.highLevel = highLevel
-    this.ctxMarker.fillStyle = '#18fa36'
-    this.ctxMarker.fillText(`${highLevel}-${lowLevel}`, 0, 100)
+    this.ctxAxisY.fillStyle = '#18fa36'
+    this.ctxAxisY.fillText(`${Math.trunc(highLevel)}-${Math.trunc(lowLevel)}`, 0, 100)
+    // this.drawYScroll(lowLevel, highLevel)
     this.drawYGrid(lowLevel, highLevel)
     this.reDrawAxis()
   }
@@ -207,7 +227,11 @@ export class SpectrogramGridLayer {
       this.ctxAxisX.beginPath()
       this.ctxAxisX.moveTo(item.scaleX, this.parentDom.clientHeight - this.AXIS_ORIGIN.y)
       this.ctxAxisX.lineTo(item.scaleX, this.parentDom.clientHeight - this.AXIS_ORIGIN.y - shortLen)
-      this.ctxAxisX.fillText(`${item.scaleText}kHz`, item.scaleX - 20, this.parentDom.clientHeight - shortLen)
+      this.ctxAxisX.fillText(
+        `${Math.trunc(item.scaleText)}kHz`,
+        item.scaleX - 20,
+        this.parentDom.clientHeight - shortLen * 2,
+      )
       this.ctxAxisX.fill()
       this.ctxAxisX.stroke()
       this.gridCache.x.push(item.scaleX)
@@ -276,12 +300,70 @@ export class SpectrogramGridLayer {
       this.ctxAxisY.beginPath()
       this.ctxAxisY.moveTo(this.AXIS_ORIGIN.x, item.scaleY)
       this.ctxAxisY.lineTo(15 + this.AXIS_ORIGIN.x, item.scaleY)
-      this.ctxAxisY.fillText(`${item.scaleText}dbm`, 5, item.scaleY + 3)
+      this.ctxAxisY.fillText(`${Math.trunc(item.scaleText)}`, shortLen * 2 - 5, item.scaleY + 5)
       this.ctxAxisY.stroke()
       this.ctxAxisY.fill()
       this.gridCache.y.push(item.scaleY)
     })
   }
+  /** 绘制x轴方向滚动条
+   * @param startNumber 当前视图的起点值
+   * @param endNumber 当前视图的终点值
+   */
+  private drawScroll(startNumber: number, endNumber: number) {
+    // 当前滚动条的起始位置
+    const scrollBoxLeft = (startNumber / (this.maxFreq - this.minFreq)) * this.parentDom.clientWidth
+    // 当前滚动条的起始位置
+    const scrollBoxRight = (endNumber / (this.maxFreq - this.minFreq)) * this.parentDom.clientWidth
+    /* 绘制滚动条显示总长 */
+    this.ctxAxisX.beginPath()
+    this.ctxAxisX.moveTo(0, this.parentDom.clientHeight - shortLen)
+    this.ctxAxisX.lineTo(this.parentDom.clientWidth, this.parentDom.clientHeight - shortLen)
+    this.ctxAxisX.lineTo(this.parentDom.clientWidth, this.parentDom.clientHeight)
+    this.ctxAxisX.lineTo(0, this.parentDom.clientHeight)
+    this.ctxAxisX.lineTo(0, this.parentDom.clientHeight - shortLen)
+    this.ctxAxisX.stroke()
+    this.ctxAxisX.fill()
+    /* 绘制当前视图的滚动条占全部滚动条的比例 */
+    this.ctxMarker.beginPath()
+    this.ctxMarker.moveTo(scrollBoxLeft, this.parentDom.clientHeight - shortLen)
+    this.ctxMarker.lineTo(scrollBoxRight, this.parentDom.clientHeight - shortLen)
+    this.ctxMarker.lineTo(scrollBoxRight, this.parentDom.clientHeight)
+    this.ctxMarker.lineTo(scrollBoxLeft, this.parentDom.clientHeight)
+    this.ctxMarker.lineTo(scrollBoxLeft, this.parentDom.clientHeight - shortLen)
+    this.ctxMarker.fillStyle = '#3CA9C4'
+    this.ctxMarker.fill()
+  }
+
+  // /** 绘制Y轴方向滚动条
+  //  * @param startNumber 当前视图的起点值
+  //  * @param endNumber 当前视图的终点值
+  //  */
+  // private drawYScroll(startNumber: number, endNumber: number) {
+  //   console.log(startNumber, endNumber)
+  //   // 当前滚动条的起始位置
+  //   const scrollBoxtop = (endNumber / (this.maxLevel - this.minLevel)) * this.parentDom.clientHeight
+  //   // 当前滚动条的起始位置
+  //   const scrollBoxbottom = (startNumber / (this.maxLevel - this.minLevel)) * this.parentDom.clientHeight
+  //   /* 绘制滚动条显示总长 */
+  //   this.ctxAxisY.beginPath()
+  //   this.ctxAxisY.moveTo(0, 0)
+  //   this.ctxAxisY.lineTo(shortLen, 0)
+  //   this.ctxAxisY.lineTo(shortLen, this.parentDom.clientHeight)
+  //   this.ctxAxisY.lineTo(0, this.parentDom.clientHeight)
+  //   this.ctxAxisY.lineTo(0, 0)
+  //   this.ctxAxisY.stroke()
+  //   this.ctxAxisY.fill()
+  //   /* 绘制当前视图的滚动条占全部滚动条的比例 */
+  //   this.ctxMarker.beginPath()
+  //   this.ctxMarker.moveTo(0, scrollBoxtop)
+  //   this.ctxMarker.lineTo(shortLen, scrollBoxtop)
+  //   this.ctxMarker.lineTo(shortLen, scrollBoxbottom)
+  //   this.ctxMarker.lineTo(0, scrollBoxbottom)
+  //   this.ctxMarker.lineTo(0, scrollBoxtop)
+  //   this.ctxMarker.fillStyle = '#3CA9C4'
+  //   this.ctxMarker.fill()
+  // }
 
   private makeCanvas(zIndex: number): HTMLCanvasElement {
     const canvas = document.createElement('canvas')

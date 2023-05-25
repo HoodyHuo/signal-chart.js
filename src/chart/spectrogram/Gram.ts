@@ -19,7 +19,6 @@ export abstract class Gram {
     position: absolute;
     top: 0px;
     left: ${options.HORIZONTAL_AXIS_MARGIN}px;
-    z-index:510;
     `
     this.dom.style.cssText = str
     options.El.appendChild(this.dom)
