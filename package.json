@@ -1,6 +1,6 @@
 {
   "name": "signal-chart",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "采用Threejs实现的信号相关图谱库",
   "cmd": "./lib/signal-chart.cjs.js",
   "main": "./lib/index.js",

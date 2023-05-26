@@ -22,8 +22,8 @@
     <button onclick="setMode(3)">平均</button>
     <button onclick="getBorder()">边框数据</button>
     <br/>
-    <input type="number" id="startFreq" value="0"/>
-    <input type="number" id="endFreq" value="4800"/>
+    <input type="number" id="startFreq" value="1000000000"/>
+    <input type="number" id="endFreq" value="2000000000"/>
     <button onclick="setFreq()">设置起止频率(Hz)</button>
     <br/>
     <input type="number" id="startLevel" value="-180"/>
@@ -40,6 +40,7 @@
             cacheCount: 500,
             Performance: true, // 是否打开性能监视窗口
             El: document.getElementById("cont"), // 图形绘制节点 
+            HORIZONTAL_AXIS_MARGIN: 20,
             color:{
                 background:'#999999',
                 line:"#000000",
@@ -48,7 +49,7 @@
 
         document.getElementById('cont')
         .addEventListener('mousemove',(event)=>{
-            console.log(gram.getPointValue(event.offsetX,event.offsetY))
+            console.log(gram.getMarkerValue(event.offsetX,event.offsetY))
             if(event.altKey){
                 const c = gram.getProject()
             }
@@ -76,9 +77,8 @@
         }
 
         //设置当前图谱的频率范围
-        gram.setFreqRange(0,4800)
+        gram.setFreqRange(1000000000,2000000000)
         //设置可视区域的范围
-        gram.setViewFreqRange(0,4800)
         window.setLevel()
         window.setFreq()
 
@@ -93,7 +93,6 @@
                 //     float32Arr[i] = b
                 // }
 
-                gram.setFreqRange(0,9600/2)
                 const float32Arr = new Float32Array(bitData)
                 let index = 0
                 setInterval(function () {
@@ -107,7 +106,7 @@
                     //取数下标更新
                     index += MAX_POINTS
                     
-                }, 1000/60)
+                }, 1000/250)
 
             })
         
