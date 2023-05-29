@@ -1,3 +1,4 @@
+import { toDisplayFreq } from '../common'
 import { Marker, SpectrogramOptions } from './SpectrogramCommon'
 
 const shortLen = 15
@@ -121,7 +122,7 @@ export class SpectrogramGridLayer {
     this.endFreqView = endFreq
     this.drawScroll(startFreq, endFreq)
     this.ctxGrid.fillStyle = '#18fa36'
-    this.ctxGrid.fillText(`${Math.trunc(startFreq)} - ${Math.trunc(startFreq)} `, 0, this.canvasAxis.height - 50)
+    this.ctxGrid.fillText(`${toDisplayFreq(startFreq)} - ${toDisplayFreq(startFreq)} `, 0, this.canvasAxis.height - 50)
     this.drawXGrid(startFreq, endFreq)
     this.reDrawAxis()
   }
@@ -228,7 +229,7 @@ export class SpectrogramGridLayer {
       this.ctxAxisX.moveTo(item.scaleX, this.parentDom.clientHeight - this.AXIS_ORIGIN.y)
       this.ctxAxisX.lineTo(item.scaleX, this.parentDom.clientHeight - this.AXIS_ORIGIN.y - shortLen)
       this.ctxAxisX.fillText(
-        `${Math.trunc(item.scaleText)}kHz`,
+        `${toDisplayFreq(item.scaleText)}`,
         item.scaleX - 20,
         this.parentDom.clientHeight - shortLen * 2,
       )
@@ -312,9 +313,9 @@ export class SpectrogramGridLayer {
    */
   private drawScroll(startNumber: number, endNumber: number) {
     // 当前滚动条的起始位置
-    const scrollBoxLeft = (startNumber / (this.maxFreq - this.minFreq)) * this.parentDom.clientWidth
+    const scrollBoxLeft = ((startNumber - this.minFreq) / (this.maxFreq - this.minFreq)) * this.parentDom.clientWidth
     // 当前滚动条的起始位置
-    const scrollBoxRight = (endNumber / (this.maxFreq - this.minFreq)) * this.parentDom.clientWidth
+    const scrollBoxRight = ((endNumber - this.minFreq) / (this.maxFreq - this.minFreq)) * this.parentDom.clientWidth
     /* 绘制滚动条显示总长 */
     this.ctxAxisX.beginPath()
     this.ctxAxisX.moveTo(0, this.parentDom.clientHeight - shortLen)

@@ -4,24 +4,33 @@
 
 ## 用法
 
-```js
-import { Spectrogram } from '../lib/signal-chart.js'
-const gram = new Spectrogram({
-  keepMode: 0, // 保持模式 0 刷新 1 最大 2 最小 3 平均
+下载`lib/signal-chart.js`添加到项目，或在 node_modules 目录拉取本项目
 
-  cacheCount: 500,
-  Performance: true, // 是否打开性能监视窗口
-  El: document.getElementById('cont'), // 图形绘制节点
+```js
+import { Spectrogram } from 'signal-chart.js'
+const gram = new Spectrogram({
+  El: document.body, //必填：挂载节点
+  Performance: false, //可选： 是否打开性能监视窗口
+  fftLen: 4800, //可选 ： FFT数组长度，默认4800，能够根据传入数据自动调整
+  HORIZONTAL_AXIS_MARGIN: 50, //可选 ： 默认50px
+  VERTICAL_AXIS_MARGIN: 50, //可选:默认50px
+  keepMode: KeepMode.CLEAN, //可选：默认刷新模式
+  cacheCount: 500, //可选：默认500帧
   color: {
-    background: '#999999', //背景色
-    line: '#000000', // 线条颜色
+    //可选
+    grid: '#555555', // 可选 背景网格颜色
+    background: '#000000', //可选 背景色
+    axis: '#FFFFFF', // 可选 轴色
+    label: '#FFFFFF', // 可选 轴标签色
+    line: '#3ed630', // 可选 折线色
   },
 })
 
-//设置当前图谱的频率范围
-gram.setFreqRange(0, 4800)
-//设置可视区域的范围
-gram.setViewFreqRange(0, 3000)
+//设置当前图谱的频率范围(表示值)
+gram.setFreqRange(1000, 32000)
+//设置可视区域的范围（Hz）,展示1.5KHz 到 32Khz
+gram.setViewFreqRange(1500, 32000)
+//设置电平显示范围（dBm）
 gram.setViewLevelRange(-120, -20)
 //更新图谱数据（FFT频谱 Float32Array 格式，每次update一帧）
 gram.update(data)
