@@ -49,7 +49,6 @@ export class Spectrogram {
   /**构造函数 */
   constructor(options: SpectrogramOptions) {
     const fullOptions = mergeDefaultOption(options)
-
     this.dom = fullOptions.El
     this.dom.style.position = 'relative'
     this.dom.style.backgroundColor = fullOptions.color.background
@@ -69,6 +68,8 @@ export class Spectrogram {
     let beforeP = {
       x: 0,
       y: 0,
+      gridx: 0,
+      gridy: 0,
     }
     let MoseType = MouseEnum.None
 
@@ -92,6 +93,12 @@ export class Spectrogram {
 
     this.dom.addEventListener('mousemove', (event: Event) => {
       const e = event as MouseEvent // 强制类型为 滚动鼠标事件
+      const p = {
+        x: Math.round(this.getMarkerValue(e.offsetX - this.AXIS_ORIGIN.x, e.offsetY).x),
+        y: Math.round(this.getMarkerValue(e.offsetX - this.AXIS_ORIGIN.x, e.offsetY).y),
+        gridx: e.offsetX,
+        gridy: e.offsetY,
+      }
       if (e.buttons > 0) {
         switch (MoseType) {
           case MouseEnum.ScrollX:
@@ -105,6 +112,7 @@ export class Spectrogram {
             break
           case MouseEnum.SelectRange:
             //TODO
+            this.gridLayer.drawMarks(beforeP.gridx, beforeP.gridy, p.gridx, p.gridy)
             break
           case MouseEnum.None:
           default:
@@ -127,6 +135,8 @@ export class Spectrogram {
         beforeP = {
           x: Math.round(this.getMarkerValue(e.offsetX - this.AXIS_ORIGIN.x, e.offsetY).x),
           y: Math.round(this.getMarkerValue(e.offsetX - this.AXIS_ORIGIN.x, e.offsetY).y),
+          gridx: e.offsetX,
+          gridy: e.offsetY,
         }
       }
     })
@@ -139,7 +149,10 @@ export class Spectrogram {
             const p = {
               x: Math.round(this.getMarkerValue(e.offsetX - this.AXIS_ORIGIN.x, e.offsetY).x),
               y: Math.round(this.getMarkerValue(e.offsetX - this.AXIS_ORIGIN.x, e.offsetY).y),
+              gridx: e.offsetX,
+              gridy: e.offsetY,
             }
+            this.gridLayer.drawMarks(beforeP.gridx, beforeP.gridy, p.gridx, p.gridy)
             if (p.x < beforeP.x) {
               this.setViewFreqRange(this.startFreq, this.endFreq)
             }

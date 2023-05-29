@@ -335,6 +335,23 @@ export class SpectrogramGridLayer {
     this.ctxMarker.fill()
   }
 
+  /** 绘制marke层
+   * @param startX 起点的x值
+   * @param startY 终点的y值
+   * @param endX 起点的x值
+   * @param endY 终点的Y值
+   */
+  public drawMarks(startX: number, startY: number, endX: number, endY: number) {
+    this.clear(this.ctxMarker)
+    this.ctxMarker.beginPath()
+    this.ctxMarker.moveTo(startX, startY)
+    this.ctxMarker.lineTo(startX, endY)
+    this.ctxMarker.lineTo(endX, endY)
+    this.ctxMarker.lineTo(endX, startY)
+    this.ctxMarker.fill()
+    this.ctxMarker.stroke()
+  }
+
   // /** 绘制Y轴方向滚动条
   //  * @param startNumber 当前视图的起点值
   //  * @param endNumber 当前视图的终点值
