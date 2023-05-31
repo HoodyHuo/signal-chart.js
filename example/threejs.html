@@ -33,9 +33,9 @@
     <div id="cont" class="cont" ></div>
     <script type="module" >
         
-        import {Spectrogram} from '../lib/signal-chart.js'
+        import {Spectrum} from '../lib/signal-chart.js'
         const MAX_POINTS  = 4800
-        const gram = new Spectrogram({
+        const gram = new Spectrum({
             keepMode: 0, // 保持模式 0 刷新 1 最大 2 最小 3 平均
             cacheCount: 500,
             Performance: true, // 是否打开性能监视窗口
