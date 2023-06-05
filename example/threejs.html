@@ -27,8 +27,8 @@
     <button onclick="setMode(3)">平均</button>
     <button onclick="getBorder()">边框数据</button>
     <br/>
-    <input type="number" id="startFreq" value="0"/>
-    <input type="number" id="endFreq" value="4800"/>
+    <input type="number" id="startFreq" value="5000"/>
+    <input type="number" id="endFreq" value="20000"/>
     <button onclick="setFreq()">设置起止频率(Hz)</button>
     <br/>
     <input type="number" id="startLevel" value="-180"/>
@@ -99,7 +99,7 @@
         const connector = new ConnectorGroup(gram,gram2)
 
         //设置当前图谱的频率范围
-        gram.setFreqRange(0,4800)
+        gram.setFreqRange(5000,20000)
         // gram2.setFreqRange(0,4800)
         //设置可视区域的范围
         window.setLevel()
@@ -126,7 +126,7 @@
                     // 根据下标，从总数据包中取出接下来的一段，因为数据包含XYZ，所以长度要取 3倍
                     const data = float32Arr.slice(index, index + MAX_POINTS )
                     gram.update(data)
-                    gram2.update({time:performance.now,data:gram.threeLayer.data})
+                    gram2.update({time:new Date().getTime(),data:gram.threeLayer.data})
                     //取数下标更新
                     index += MAX_POINTS
                     

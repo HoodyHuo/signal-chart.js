@@ -1,6 +1,6 @@
 import { ColorMap } from '@/tool/ColorMap'
 import { makeCanvas } from '../common'
-import { FrameData, SpectrogramAttr, SpectrogramOptions } from './SpectrogramCommon'
+import { FrameData, SpectrogramAttr, SpectrogramDirection, SpectrogramOptions } from './SpectrogramCommon'
 /** 平面图 */
 export class PlaneLayer {
   // --------------------------------------- 基础属性-------------------------
@@ -47,8 +47,17 @@ export class PlaneLayer {
     this.chartCtx = this.chartCanvas.getContext('2d')
     this.clear(this.chartCtx)
     this.dom.appendChild(this.chartCanvas)
-  }
 
+    /** 注册事件 */
+    this.regevent()
+  }
+  private regevent(): void {
+    this.chartCanvas.addEventListener('mousemove', (e: MouseEvent) => {
+      const v = this.translateToWorld(e.offsetX, e.offsetY)
+      console.log(v)
+      console.log(this.translateToScreen(v.freq, v.time))
+    })
+  }
   /**
    * 增加数据行
    * @param fd 语图帧数据
@@ -57,6 +66,60 @@ export class PlaneLayer {
     this.appendLine(fd)
     this.drawToChart()
   }
+
+  /**
+   * 获取屏幕坐标系上指定位置的数据
+   * @param x Web坐标系的X
+   * @param y Web坐标系的Y
+   * @returns 所在位置的 频率、电平、时间
+   */
+  public translateToWorld(x: number, y: number): { freq: number; level: number; time: number } {
+    // 每像素频率
+    const freqPerPx = (this.attr.endFreqView - this.attr.startFreqView) / this.chartCanvas.clientWidth
+    // 当前鼠标位置的频率
+    const freq = freqPerPx * x + this.attr.startFreqView
+    // 频率在整个FFT数据中的index
+    const indexFreq = Math.round(
+      ((freq - this.attr.startFreq) / (this.attr.endFreq - this.attr.startFreq)) * this.options.fftLen,
+    )
+    // 时间在整个FFT数据中的index
+    const indexTime = Math.round((y / this.chartCanvas.clientHeight) * this.attr.recentCache.cap())
+
+    //频率，频率下标、时间下标、电平
+    // console.log(freq, indexFreq, indexTime, this.attr.recentCache.see(indexTime).data[indexFreq])
+    return {
+      freq: Math.round(freq),
+      level: this.attr.recentCache.see(indexTime).data[indexFreq],
+      time: this.attr.recentCache.see(indexTime).time,
+    }
+  }
+
+  /**
+   * 通过频率、时间获取到对应屏幕的坐标系位置
+   * @param freq 频率
+   * @param time 时间 毫秒值
+   * @returns 对应屏幕坐标系位置
+   */
+  public translateToScreen(freq: number, time: number): { x: number; y: number } {
+    // 每像素频率
+    const freqPerPx = (this.attr.endFreqView - this.attr.startFreqView) / this.chartCanvas.clientWidth
+    const px = (freq - this.attr.startFreq) / freqPerPx
+
+    // 每条记录时间差
+    const deltaTimePreRecord =
+      (this.attr.recentCache.peek().time - this.attr.recentCache.see(this.attr.recentCache.size() - 1).time) /
+      (this.attr.recentCache.size() - 1)
+
+    // 每像素时间值 = 记录时间差/ 缩放比例
+    const timePerpx = deltaTimePreRecord / (this.chartCanvas.clientHeight / this.attr.recentCache.cap())
+    // Y像素= time和最新时间差 / 每像素时间值
+    const py = (this.attr.recentCache.peek().time - time) / timePerpx
+    return {
+      x: Math.round(px),
+      y: Math.round(py),
+    }
+  }
+
   /**
    * 通过计算展示的频率范围，将缓存层图谱提取绘制到显示图层
    * TODO 根据方向进行旋转
