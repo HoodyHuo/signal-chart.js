@@ -3,10 +3,15 @@ import { makeCanvas } from '../common'
 import { FrameData, SpectrogramAttr, SpectrogramOptions } from './SpectrogramCommon'
 /** 平面图 */
 export class PlaneLayer {
+  // --------------------------------------- 基础属性-------------------------
   /** 挂载dom */
   private dom: HTMLElement
+  /** 构造配置 */
   private options: SpectrogramOptions
+  /** 共享属性 */
   private attr: SpectrogramAttr
+
+  // --------------------------------------- Canvas 图层-------------------------
 
   /** 缓存图层  */
   private cacheCanvas: HTMLCanvasElement
@@ -53,8 +58,15 @@ export class PlaneLayer {
     const sh = this.cacheCanvas.height
     const dw = this.chartCanvas.clientWidth
     const dh = this.chartCanvas.clientHeight
-    // 缩放绘制图像到
-    this.chartCtx.drawImage(this.cacheCanvas, 0, 0, sw, sh, 0, 0, dw, dh)
+    // 缩放绘离线图形到显示图形，在这里做频率范围控制
+    // this.chartCtx.drawImage(this.cacheCanvas, 0, 0, sw, sh, 0, 0, dw, dh)
+    const 频率起点百分比 = (this.attr.startFreqView - this.attr.startFreq) / (this.attr.endFreq - this.attr.startFreq)
+    const 频率终点百分比 = (this.attr.endFreqView - this.attr.startFreq) / (this.attr.endFreq - this.attr.startFreq)
+    const 内存图起点X = 频率起点百分比 * this.options.fftLen
+    const 内存终点X = 频率终点百分比 * this.options.fftLen
+    const 显示宽度 = 内存终点X - 内存图起点X
+
+    this.chartCtx.drawImage(this.cacheCanvas, 内存图起点X, 0, 显示宽度, sh, 0, 0, dw, dh)
   }
 
   private appendLine(fd: FrameData) {
@@ -111,5 +123,17 @@ export class PlaneLayer {
     canvasCtx.forEach((element) => {
       element.clearRect(0, 0, element.canvas.clientWidth, element.canvas.clientHeight)
     })
+  }
+
+  /**
+   * 设置整个图的频率范围
+   * @param startFreq 起点频率
+   * @param endFreq 终止频率
+   */
+  public setFreqRange(startFreq: number, endFreq: number) {
+    //TODO 重绘标尺
+  }
+  public setViewFreqRange(startFreq: number, endFreq: number) {
+    //TODO 重绘标尺
   }
 }

@@ -83,7 +83,7 @@ export class Spectrogram {
     this.attr.startFreq = startFreq
     this.attr.endFreq = endFreq
     this.attr.recentCache = this.resetCache()
-    //TODO
+    this.planeLayer.setFreqRange(startFreq, endFreq)
   }
   /** 重置缓存 */
   private resetCache() {
@@ -95,6 +95,6 @@ export class Spectrogram {
   public setViewFreqRange(startFreq: number, endFreq: number) {
     this.attr.startFreqView = startFreq
     this.attr.endFreqView = endFreq
-    //TODO
+    this.planeLayer.setViewFreqRange(startFreq, endFreq)
   }
 }
