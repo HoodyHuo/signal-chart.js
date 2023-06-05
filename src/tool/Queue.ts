@@ -25,7 +25,9 @@ export class Queue<T> {
     this._elements.unshift(item)
     return out
   }
-
+  public see(l: number) {
+    return this._elements[l]
+  }
   /**
    * 查看最后添加的元素，不对队列进行修改
    * @returns T 最后一个元素
