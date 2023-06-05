@@ -33,7 +33,10 @@ export type SpectrogramAttr = {
   startFreqView: number
   /** 当前视图终止频率 */
   endFreqView: number
-
+  /** 当前视图低电平 */
+  lowLevel: number
+  /** 当前视图高电平 */
+  highLevel: number
   /** 缓存，保存了最近N包的数据 */
   recentCache: Queue<FrameData>
 }

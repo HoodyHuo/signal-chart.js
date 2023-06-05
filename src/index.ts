@@ -1,1 +1,3 @@
-export * from './chart/spectrogram/Spectrogram'
+export * from './chart/spectrum/index'
+export * from './chart/spectrogram/index'
+export * from './chart/ConnectorGroup'

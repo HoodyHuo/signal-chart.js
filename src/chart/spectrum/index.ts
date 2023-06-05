@@ -2,7 +2,8 @@ import { SpectrogramThreeLayer } from './SpectrumThreeLayer'
 import { KeepMode, mergeDefaultOption, SpectrogramOptions } from './SpectrumCommon'
 import { SpectrogramGridLayer } from './SpectrumGridLayer'
 import { Position } from '../common'
-
+import { EventDispatcher } from 'three'
+import { EmitEvent, FreqChangeable } from '../ConnectorGroup'
 /** 鼠标事件类型 */
 enum MouseEnum {
   ScrollY,
@@ -13,7 +14,7 @@ enum MouseEnum {
 }
 
 /**频谱网格图层 */
-export class Spectrum {
+export class Spectrum extends EventDispatcher implements FreqChangeable {
   /**------------------------图谱属性--------------------------------- */
   private dom: HTMLElement
 
@@ -48,6 +49,7 @@ export class Spectrum {
 
   /**构造函数 */
   constructor(options: SpectrogramOptions) {
+    super()
     const fullOptions = mergeDefaultOption(options)
     this.dom = fullOptions.El
     this.dom.style.position = 'relative'
@@ -276,6 +278,7 @@ export class Spectrum {
    * @param startFreq 起点频率
    * @param endFreq 终点频率
    */
+  @EmitEvent
   public setFreqRange(startFreq: number, endFreq: number) {
     this.startFreq = startFreq
     this.endFreq = endFreq
@@ -287,6 +290,7 @@ export class Spectrum {
    * @param startFreq 起点频率
    * @param endFreq 终点频率
    */
+  @EmitEvent
   public setViewFreqRange(startFreq: number, endFreq: number) {
     if (startFreq < this.startFreq || endFreq > this.endFreq || endFreq <= startFreq) {
       throw new Error('设置起止频率范围错误')
@@ -300,23 +304,14 @@ export class Spectrum {
   }
 
   /**
-   * 设置总图谱数据的起止频率范围（HZ）
-   * @param lowLevel 最低点电平
-   * @param highLevel 最高点电平
-   */
-  public setLevelRange(lowLevel: number, highLevel: number) {
-    this.minLevel = lowLevel
-    this.maxLevel = highLevel
-  }
-
-  /**
    * 设置当前图谱展示的电平值范围
    * @param lowLevel 低点电平
    * @param highLevel 高点电平
    */
+  @EmitEvent
   public setViewLevelRange(lowLevel: number, highLevel: number) {
     if (lowLevel >= highLevel || lowLevel < this.minLevel || highLevel > this.maxLevel) {
-      throw new Error('设置起止频率范围错误')
+      throw new Error('设置起止电平范围错误')
     }
     this.threeLayer.setViewLevel(lowLevel, highLevel)
     this.gridLayer.setViewLevel(lowLevel, highLevel)
