@@ -23,3 +23,16 @@ export function toDisplayFreq(freq: number): string {
   }
   return `${freq}Hz`
 }
+
+export function makeCanvas(zIndex: number, height: number, width: number): HTMLCanvasElement {
+  const canvas = document.createElement('canvas')
+  canvas.setAttribute('width', width + 'px')
+  canvas.setAttribute('height', height + 'px')
+  canvas.style.cssText = `
+    position:float;
+    top:0;
+    left:0px;
+    z-index:${zIndex};
+    `
+  return canvas
+}

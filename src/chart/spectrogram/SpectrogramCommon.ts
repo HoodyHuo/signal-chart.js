@@ -1,88 +1,101 @@
-/**保持模式 */
-export enum KeepMode {
-  /**刷新模式 */
-  CLEAN,
-  /**最大保持模式 */
-  MAX,
-  /**最小保持模式 */
-  MIN,
-  /** 平均模式 */
-  AVG,
+import { Queue } from '../../tool/Queue'
+
+/** 朝向 */
+export enum SpectrogramDirection {
+  /** 向上 */
+  UP,
+  /** 向左 */
+  Left,
+}
+/** 图谱类型 */
+export enum SpectrogramType {
+  /** 平面2D  */
+  Plane,
+  /** 立体三维 */
+  Stereo,
 }
 
+/** 每帧数据 */
+export type FrameData = {
+  /** 帧时间 */
+  time: number
+  /** 帧频谱 */
+  data: Float32Array
+}
+
+/** 公用配置信息 */
+export type SpectrogramAttr = {
+  /** 数据起点频率 */
+  startFreq: number
+  /** 数据终止频率 */
+  endFreq: number
+  /** 当前视图起点频率 */
+  startFreqView: number
+  /** 当前视图终止频率 */
+  endFreqView: number
+
+  /** 缓存，保存了最近N包的数据 */
+  recentCache: Queue<FrameData>
+}
+
+export enum SpectrogramColorMap {
+  Rainbow,
+}
+
+export interface ColorMap {
+  get(value: number): string
+}
 export interface GramOptions {
   /** 是否打开性能监视窗口 */
   Performance: boolean
   /** 图形绘制节点 */
   El: HTMLElement
-  /** Y轴与canvas的距离px */
-  HORIZONTAL_AXIS_MARGIN?: number
-  /** X轴标尺与canvas的距离px */
-  VERTICAL_AXIS_MARGIN?: number
 }
-
-export type Marker = {
-  freq: number //频率 Hz
-  name: string // marker 名称
-}
-
-/**
- * 转换FFT数组到绘制数组
- * @param dist 绘制数据缓冲区
- * @param src  频谱FFT数据
- * @returns Threejs绘制的三维数组
- */
-export const convertToDrawData = (drawData: Float32Array, src: Float32Array) => {
-  for (let i = 0; i < src.length; i++) {
-    drawData[i * 3] = i // X轴按下标
-    drawData[i * 3 + 1] = src[i] // y轴值
-    drawData[i * 3 + 2] = 0 //平面图，Z轴始终为0
-  }
-}
-
-export interface Color {
-  /** 背景网格颜色 */
-  grid?: string
-  /** 背景色 */
-  background?: string
-  /** 轴色 */
-  axis?: string
-  /** 轴标签色 */
-  label?: string
-  /** 折线色 */
-  line?: string
-}
-
-/**
- * 频谱图配置参数
- */
+/** 语图配置 */
 export interface SpectrogramOptions extends GramOptions {
-  /** 保持模式 */
-  keepMode?: KeepMode
+  /** 频谱图方向 */
+  direction?: SpectrogramDirection
+  /** 频频图类型：2D 3D  */
+  type?: SpectrogramType
+  /** 色 */
+  color?: {
+    /** 图色谱 颜色字符串 如 #FFFFFF,#000000 */
+    front?: string[]
+    /** 背景色 */
+    background?: string
+    /** 轴色 */
+    axis?: string
+    /** 轴标签色 */
+    label?: string
+  }
+  fftLen?: number
   /** 缓存帧数 */
   cacheCount?: number
-  /**颜色配置 */
-  color?: Color
-  /**FFT 数组长度 */
-  fftLen?: number
 }
 export function mergeDefaultOption(options: SpectrogramOptions): SpectrogramOptions {
-  const defaultOption = {
-    El: document.body,
-    Performance: false,
-    fftLen: 4800,
-    HORIZONTAL_AXIS_MARGIN: 50,
-    VERTICAL_AXIS_MARGIN: 50,
-    keepMode: KeepMode.CLEAN,
-    cacheCount: 500,
+  const defaultOpt = {
+    /** 频谱图方向 */
+    direction: SpectrogramDirection.UP,
+    /** 频频图类型：2D 3D  */
+    type: SpectrogramType.Plane,
+    /** 色 */
     color: {
-      grid: '#555555', // 背景网格颜色
-      background: '#000000', // 背景色
-      axis: '#FFFFFF', // 轴色
-      label: '#FFFFFF', // 轴标签色
-      line: '#3ed630', // 折线色
+      /** 图色谱 */
+      front: ['blue', 'red', 'yellow'],
+      /** 背景色 */
+      background: 'black',
+      /** 轴色 */
+      axis: 'white',
+      /** 轴标签色 */
+      label: 'white',
     },
+    fftLen: 4800,
+    /** 缓存帧数 */
+    cacheCount: 500,
+    Performance: true,
   }
-  Object.assign(defaultOption, options)
-  return defaultOption
+  const color = Object.assign(defaultOpt.color, options?.color)
+  const temp = Object.assign(defaultOpt, options)
+  temp.color = color
+  return temp
 }
