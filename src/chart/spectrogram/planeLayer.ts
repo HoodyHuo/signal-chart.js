@@ -1,6 +1,6 @@
 import { ColorMap } from '@/tool/ColorMap'
 import { makeCanvas } from '../common'
-import { FrameData, SpectrogramAttr, SpectrogramDirection, SpectrogramOptions } from './SpectrogramCommon'
+import { FrameData, SpectrogramAttr, SpectrogramOptions } from './SpectrogramCommon'
 /** 平面图 */
 export class PlaneLayer {
   // --------------------------------------- 基础属性-------------------------
@@ -25,6 +25,10 @@ export class PlaneLayer {
   private gridCanvas: HTMLCanvasElement
   private gridCtx: CanvasRenderingContext2D
 
+  /** 时间图层 */
+  private timeCanvas: HTMLCanvasElement
+  private timeCtx: CanvasRenderingContext2D
+
   /** 色谱 */
   private color: ColorMap
 
@@ -43,10 +47,27 @@ export class PlaneLayer {
     this.clear(this.cacheCtx)
 
     /** 创建绘制图层 */
-    this.chartCanvas = makeCanvas(500, this.dom.clientHeight, this.dom.clientWidth)
+    this.chartCanvas = makeCanvas(
+      500,
+      this.dom.clientHeight - this.options.VERTICAL_AXIS_MARGIN,
+      this.dom.clientWidth - this.options.HORIZONTAL_AXIS_MARGIN,
+    )
+    this.chartCanvas.style.left = this.options.HORIZONTAL_AXIS_MARGIN + 'px'
     this.chartCtx = this.chartCanvas.getContext('2d')
     this.clear(this.chartCtx)
     this.dom.appendChild(this.chartCanvas)
+
+    /** 创建网格图层 */
+    this.gridCanvas = makeCanvas(510, this.dom.clientHeight, this.dom.clientWidth)
+    this.gridCtx = this.gridCanvas.getContext('2d')
+    this.clear(this.gridCtx)
+    this.dom.appendChild(this.gridCanvas)
+
+    /** 创建时间图层 */
+    this.timeCanvas = makeCanvas(520, this.dom.clientHeight, this.dom.clientWidth)
+    this.timeCtx = this.timeCanvas.getContext('2d')
+    this.clear(this.timeCtx)
+    this.dom.appendChild(this.timeCanvas)
 
     /** 注册事件 */
     this.regevent()
@@ -102,7 +123,7 @@ export class PlaneLayer {
    */
   public translateToScreen(freq: number, time: number): { x: number; y: number } {
     // 每像素频率
-    const freqPerPx = (this.attr.endFreqView - this.attr.startFreqView) / this.chartCanvas.clientWidth
+    const freqPerPx = (this.attr.endFreqView - this.attr.startFreqView) / (this.chartCanvas.clientWidth - 1)
     const px = (freq - this.attr.startFreq) / freqPerPx
 
     // 每条记录时间差
@@ -205,10 +226,12 @@ export class PlaneLayer {
    * @param endFreq 终止频率
    */
   public setFreqRange(startFreq: number, endFreq: number) {
-    //TODO 重绘标尺
+    //TODO 重绘标尺3
+    this.drawToChart()
   }
   public setViewFreqRange(startFreq: number, endFreq: number) {
     //TODO 重绘标尺
+    this.drawToChart()
   }
   /**
    * 设置当前图谱展示的电平值范围

@@ -74,6 +74,10 @@ export interface SpectrogramOptions extends GramOptions {
   fftLen?: number
   /** 缓存帧数 */
   cacheCount?: number
+  /** Y轴与canvas的距离px */
+  HORIZONTAL_AXIS_MARGIN?: number
+  /** X轴标尺与canvas的距离px */
+  VERTICAL_AXIS_MARGIN?: number
 }
 export function mergeDefaultOption(options: SpectrogramOptions): SpectrogramOptions {
   const defaultOpt = {
@@ -96,6 +100,10 @@ export function mergeDefaultOption(options: SpectrogramOptions): SpectrogramOpti
     /** 缓存帧数 */
     cacheCount: 500,
     Performance: true,
+    /** Y轴与canvas的距离px */
+    HORIZONTAL_AXIS_MARGIN: 20,
+    /** X轴标尺与canvas的距离px */
+    VERTICAL_AXIS_MARGIN: 50,
   }
   const color = Object.assign(defaultOpt.color, options?.color)
   const temp = Object.assign(defaultOpt, options)

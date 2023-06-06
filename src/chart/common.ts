@@ -29,7 +29,7 @@ export function makeCanvas(zIndex: number, height: number, width: number): HTMLC
   canvas.setAttribute('width', width + 'px')
   canvas.setAttribute('height', height + 'px')
   canvas.style.cssText = `
-    position:float;
+    position:absolute;
     top:0;
     left:0px;
     z-index:${zIndex};
