@@ -1,4 +1,4 @@
-import { ColorMap } from '@/tool/ColorMap'
+import { ColorMap } from '../../tool/ColorMap'
 import { makeCanvas } from '../common'
 import { FrameData, SpectrogramAttr, SpectrogramOptions } from './SpectrogramCommon'
 /** 平面图 */
