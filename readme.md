@@ -55,6 +55,34 @@ gram.setViewFreqRange(1500, 32000)
 gram.setViewLevelRange(-120, -20)
 //更新图谱数据（FFT频谱 Float32Array 格式，每次update一帧）
 gram.update(data)
+
+//                        Marker 功能
+// 添加marker
+// 传入频点，或marker参数，返回marker名称
+addMarker(marker: number | Marker): string
+//
+const markerName = gram.addMarker(1000) //将marker添加到1000Hz
+const markerName = gram.addMarker({
+  freq: 1000 //频率 Hz
+  level: -50 // 设置电平dBm 可选，如果设置，则会强制绘制到此处
+  name: "mark1" // marker 名称 可选,如果不设置，则会按照计数器增加 eg: marker1
+})
+
+// 调整marker
+setMarker(markerName: string, freq: number)
+gram.setMarker("marker1",4000) //调整marker1 到4kHz
+//
+
+
+// 获取Marker
+getMarker(name: string): Marker
+getMarkers(): Map<string, Marker>
+
+//移除marker,如果没有参数，则移除所有marker
+removeMarker(...markerName: string[])
+gram.removeMarker("marker1",'marker2')
+gram.removeMarker() //如果没有参数，则移除所有marker
+
 ```
 
 ### 2. 语图

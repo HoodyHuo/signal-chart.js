@@ -8,13 +8,13 @@
     <script src="axios.js"></script>
     <style>
         .cont{
-            height: 800px;
-            width: 1400px;
+            height: 400px;
+            width: 700px;
             background-color: #3ed630;
         }
         .cont2{
-            height: 800px;
-            width: 1400px;
+            height: 400px;
+            width: 700px;
             background-color: #3083d6;
         }
     </style>
@@ -27,16 +27,16 @@
     <button onclick="setMode(3)">平均</button>
     <button onclick="getBorder()">边框数据</button>
     <br/>
-    <input type="number" id="startFreq" value="5000"/>
-    <input type="number" id="endFreq" value="20000"/>
+    <input type="number" id="startFreq" value="0"/>
+    <input type="number" id="endFreq" value="4800"/>
     <button onclick="setFreq()">设置起止频率(Hz)</button>
     <br/>
     <input type="number" id="startLevel" value="-180"/>
     <input type="number" id="endLevel" value="10"/>
     <button onclick="setLevel()">设置起止电平(dBm)</button>
 
-    <div id="cont" class="cont" ></div>
     <div id="cont2" class="cont2"></div>
+    <div id="cont" class="cont" ></div>
     <script type="module" >
         
         import {Spectrum,Spectrogram,ConnectorGroup} from '../lib/signal-chart.js'
@@ -80,6 +80,7 @@
         window.getBorder = function(){
             const v = gram.getBorderValue()
             console.log(v)
+            console.log(gram.getMarkers())
         }
 
         window.setFreq= function(){
@@ -99,12 +100,17 @@
         const connector = new ConnectorGroup(gram,gram2)
 
         //设置当前图谱的频率范围
-        gram.setFreqRange(5000,20000)
+        gram.setFreqRange(0,4800)
         // gram2.setFreqRange(0,4800)
         //设置可视区域的范围
         window.setLevel()
         window.setFreq()
 
+        gram.addMarker(1000)
+        gram.addMarker({
+            freq:4200,
+            // level:-20
+        })
         // animate
         axios.get('./fftData-4.dat', { responseType: 'arraybuffer' }).then(res => {
                 const bitData = res.data
@@ -126,11 +132,14 @@
                     // 根据下标，从总数据包中取出接下来的一段，因为数据包含XYZ，所以长度要取 3倍
                     const data = float32Arr.slice(index, index + MAX_POINTS )
                     gram.update(data)
-                    gram2.update({time:new Date().getTime(),data:gram.threeLayer.data})
+                    gram2.update({
+                        time:new Date().getTime(),
+                        data:gram.threeLayer.data
+                    })
                     //取数下标更新
                     index += MAX_POINTS
                     
-                }, 1000/60)
+                }, 1000/1)
 
             })
         

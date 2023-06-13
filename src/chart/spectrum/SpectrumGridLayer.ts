@@ -1,5 +1,5 @@
 import { toDisplayFreq } from '../common'
-import { Marker, SpectrogramOptions } from './SpectrumCommon'
+import { Marker, SpectrogramOptions, SpectrumAttr } from './SpectrumCommon'
 
 const shortLen = 15
 
@@ -8,6 +8,7 @@ export class SpectrogramGridLayer {
   /**------------------------图谱属性--------------------------------- */
   /**配置*/
   private options: SpectrogramOptions
+  private attr: SpectrumAttr
 
   /** 当前视图起点频率 */
   private startFreqView: number
@@ -19,13 +20,11 @@ export class SpectrogramGridLayer {
   /** 当前视图高电平 */
   private highLevel: number
 
-  /**所有marker标点 */
-  private markers: Array<Marker>
-
   /**------------------------图像层元素--------------------------------- */
   /** canvas 元素 */
   private canvasAxis: HTMLCanvasElement
   private canvasMarker: HTMLCanvasElement
+  private canvasScorll: HTMLCanvasElement
   private canvasAxisX: HTMLCanvasElement
   private canvasAxisY: HTMLCanvasElement
   /** 挂载元素 */
@@ -33,6 +32,7 @@ export class SpectrogramGridLayer {
   /** 绘制山下文 */
   private ctxGrid: CanvasRenderingContext2D
   private ctxMarker: CanvasRenderingContext2D
+  private ctxScorll: CanvasRenderingContext2D
   private ctxAxisX: CanvasRenderingContext2D
   private ctxAxisY: CanvasRenderingContext2D
   /** 记录初始最小频率 */
@@ -43,17 +43,22 @@ export class SpectrogramGridLayer {
   private minLevel: number
   /** 记录初始最大电平 */
   private maxLevel: number
-  AXIS_ORIGIN: { x: number; y: number }
+  private AXIS_ORIGIN: { x: number; y: number }
+
+  /**------------------------事件控制元素--------------------------------- */
+  private isOperatingMarker: boolean
   /**
    * 创建网格缓存数组，用于绘制网格
    * @param gridCache 缓存数组
    * @param x x轴数组
    * @param y y轴数组
    */
-  gridCache: { x: number[]; y: number[] }
+  private gridCache: { x: number[]; y: number[] }
 
-  constructor(options: SpectrogramOptions) {
+  constructor(options: SpectrogramOptions, attr: SpectrumAttr) {
     this.parentDom = options.El
+    this.attr = attr
+    this.isOperatingMarker = false
     /** 初始化网格绘制数组 */
     this.gridCache = {
       x: [],
@@ -79,12 +84,16 @@ export class SpectrogramGridLayer {
     this.ctxAxisY.fillStyle = options.color.label
     this.ctxAxisY.lineWidth = 2
     /** 创建Marker图层 */
-    this.canvasMarker = this.makeCanvas(530)
+    this.canvasMarker = this.makeCanvas(522)
     this.parentDom.appendChild(this.canvasMarker)
     this.ctxMarker = this.canvasMarker.getContext('2d')
+    /** 创建Scorll图层 */
+    this.canvasScorll = this.makeCanvas(530)
+    this.parentDom.appendChild(this.canvasScorll)
+    this.ctxScorll = this.canvasScorll.getContext('2d')
     //TODO  设置颜色
     /**清空图层内容 */
-    this.clear(this.ctxGrid, this.ctxAxisX, this.ctxAxisY, this.ctxMarker)
+    this.clear(this.ctxGrid, this.ctxAxisX, this.ctxAxisY, this.ctxMarker, this.ctxScorll)
     // 标尺原点，以此为起点
     this.AXIS_ORIGIN = {
       x: options.HORIZONTAL_AXIS_MARGIN,
@@ -97,11 +106,11 @@ export class SpectrogramGridLayer {
    */
   clear(...canvasCtx: CanvasRenderingContext2D[]) {
     if (canvasCtx.length == 0) {
-      this.clear(this.ctxGrid, this.ctxAxisX, this.ctxAxisY, this.ctxMarker)
+      this.clear(this.ctxGrid, this.ctxAxisX, this.ctxAxisY, this.ctxMarker, this.ctxScorll)
       return
     }
     canvasCtx.forEach((element) => {
-      element.clearRect(0, 0, this.parentDom.clientWidth, this.parentDom.clientHeight)
+      element.clearRect(0, 0, element.canvas.width, element.canvas.height)
     })
   }
 
@@ -116,8 +125,7 @@ export class SpectrogramGridLayer {
       this.minFreq = startFreq
       this.maxFreq = endFreq
     }
-    this.clear(this.ctxAxisX)
-    this.clear(this.ctxMarker)
+    this.clear(this.ctxAxisX, this.ctxMarker, this.ctxScorll)
     this.startFreqView = startFreq
     this.endFreqView = endFreq
     this.drawScroll(startFreq, endFreq)
@@ -125,6 +133,7 @@ export class SpectrogramGridLayer {
     this.ctxGrid.fillText(`${toDisplayFreq(startFreq)} - ${toDisplayFreq(startFreq)} `, 0, this.canvasAxis.height - 50)
     this.drawXGrid(startFreq, endFreq)
     this.reDrawAxis()
+    this.reDrawMarkers()
   }
   /**
    * 设置当前显示区域的电平范围
@@ -145,6 +154,7 @@ export class SpectrogramGridLayer {
     // this.drawYScroll(lowLevel, highLevel)
     this.drawYGrid(lowLevel, highLevel)
     this.reDrawAxis()
+    this.reDrawMarkers()
   }
   /** 重绘坐标轴 */
   private reDrawAxis() {
@@ -169,6 +179,51 @@ export class SpectrogramGridLayer {
     })
     this.ctxGrid.stroke()
   }
+
+  /**
+   * 更新频谱时，重绘marker
+   * @param data 频谱数据
+   */
+  public update(data: Float32Array): void {
+    this.reDrawMarkers()
+  }
+
+  /**
+   *  重绘marker
+   */
+  public reDrawMarkers(): void {
+    if (this.isOperatingMarker) {
+      return
+    }
+    this.clear(this.ctxMarker)
+    this.attr.markers.forEach((marker, name) => {
+      this.drawTriangleMark(marker, this.attr.data)
+    })
+  }
+  /**
+   * 计算marker的频点位置，提取level信息，绘制三角marker
+   * @param marker maker对象
+   * @param data 频谱数据
+   */
+  private drawTriangleMark(marker: Marker, data: Float32Array): void {
+    const freqPercent = (marker.freq - this.minFreq) / (this.maxFreq - this.minFreq)
+    const index = Math.round(freqPercent * data.length)
+    marker._level = data[index] // 将当前marker电平写入
+    const level = marker.level ?? data[index] //如果marker 提供了level，则绘制它
+    const XPercent = (marker.freq - this.startFreqView) / (this.endFreqView - this.startFreqView)
+    const xPx = this.AXIS_ORIGIN.x + (this.canvasMarker.width - this.AXIS_ORIGIN.x) * XPercent
+    const levelPercent = (level - this.lowLevel) / (this.highLevel - this.lowLevel)
+    const yPx = (this.canvasMarker.height - this.AXIS_ORIGIN.y) * (1 - levelPercent)
+    this.ctxMarker.beginPath()
+    this.ctxMarker.fillStyle = '#FFFFFF'
+    this.ctxMarker.moveTo(xPx, yPx)
+    this.ctxMarker.lineTo(xPx - 5, yPx - 10)
+    this.ctxMarker.lineTo(xPx + 5, yPx - 10)
+    this.ctxMarker.lineTo(xPx, yPx)
+    this.ctxMarker.fill()
+    this.ctxMarker.closePath()
+  }
+
   /**
    * 绘制x轴形状
    * @param startXNumber 横向初始点值
@@ -326,14 +381,14 @@ export class SpectrogramGridLayer {
     this.ctxAxisX.stroke()
     this.ctxAxisX.fill()
     /* 绘制当前视图的滚动条占全部滚动条的比例 */
-    this.ctxMarker.beginPath()
-    this.ctxMarker.moveTo(scrollBoxLeft, this.parentDom.clientHeight - shortLen)
-    this.ctxMarker.lineTo(scrollBoxRight, this.parentDom.clientHeight - shortLen)
-    this.ctxMarker.lineTo(scrollBoxRight, this.parentDom.clientHeight)
-    this.ctxMarker.lineTo(scrollBoxLeft, this.parentDom.clientHeight)
-    this.ctxMarker.lineTo(scrollBoxLeft, this.parentDom.clientHeight - shortLen)
-    this.ctxMarker.fillStyle = '#3CA9C4'
-    this.ctxMarker.fill()
+    this.ctxScorll.beginPath()
+    this.ctxScorll.moveTo(scrollBoxLeft, this.parentDom.clientHeight - shortLen)
+    this.ctxScorll.lineTo(scrollBoxRight, this.parentDom.clientHeight - shortLen)
+    this.ctxScorll.lineTo(scrollBoxRight, this.parentDom.clientHeight)
+    this.ctxScorll.lineTo(scrollBoxLeft, this.parentDom.clientHeight)
+    this.ctxScorll.lineTo(scrollBoxLeft, this.parentDom.clientHeight - shortLen)
+    this.ctxScorll.fillStyle = '#3CA9C4'
+    this.ctxScorll.fill()
   }
 
   /** 绘制marke层
@@ -343,14 +398,14 @@ export class SpectrogramGridLayer {
    * @param endY 终点的Y值
    */
   public drawMarks(startX: number, startY: number, endX: number, endY: number) {
-    this.clear(this.ctxMarker)
-    this.ctxMarker.beginPath()
-    this.ctxMarker.moveTo(startX, startY)
-    this.ctxMarker.lineTo(startX, endY)
-    this.ctxMarker.lineTo(endX, endY)
-    this.ctxMarker.lineTo(endX, startY)
-    this.ctxMarker.fill()
-    this.ctxMarker.stroke()
+    this.clear(this.ctxScorll)
+    this.ctxScorll.beginPath()
+    this.ctxScorll.moveTo(startX, startY)
+    this.ctxScorll.lineTo(startX, endY)
+    this.ctxScorll.lineTo(endX, endY)
+    this.ctxScorll.lineTo(endX, startY)
+    this.ctxScorll.fill()
+    this.ctxScorll.stroke()
   }
 
   // /** 绘制Y轴方向滚动条

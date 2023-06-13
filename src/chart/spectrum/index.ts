@@ -1,5 +1,5 @@
 import { SpectrogramThreeLayer } from './SpectrumThreeLayer'
-import { KeepMode, mergeDefaultOption, SpectrogramOptions } from './SpectrumCommon'
+import { KeepMode, Marker, mergeDefaultOption, SpectrogramOptions, SpectrumAttr } from './SpectrumCommon'
 import { SpectrogramGridLayer } from './SpectrumGridLayer'
 import { Position } from '../common'
 import { EventDispatcher } from 'three'
@@ -23,6 +23,8 @@ export class Spectrum extends EventDispatcher implements FreqChangeable {
   private options: SpectrogramOptions
   /** 显示模式 */
   private keepMode: KeepMode
+
+  private attr: SpectrumAttr
 
   /** 数据起点频率 */
   private startFreq: number
@@ -55,8 +57,14 @@ export class Spectrum extends EventDispatcher implements FreqChangeable {
     this.dom.style.position = 'relative'
     this.dom.style.backgroundColor = fullOptions.color.background
 
-    this.threeLayer = new SpectrogramThreeLayer(fullOptions)
-    this.gridLayer = new SpectrogramGridLayer(fullOptions)
+    this.attr = {
+      markers: new Map<string, Marker>(),
+      markerCur: 1,
+      data: new Float32Array(),
+    }
+
+    this.threeLayer = new SpectrogramThreeLayer(fullOptions, this.attr)
+    this.gridLayer = new SpectrogramGridLayer(fullOptions, this.attr)
     // 标尺原点，以此为起点
     this.AXIS_ORIGIN = {
       x: fullOptions.HORIZONTAL_AXIS_MARGIN,
@@ -64,6 +72,75 @@ export class Spectrum extends EventDispatcher implements FreqChangeable {
     }
 
     this.registeEvent()
+  }
+
+  /**
+   * 获取maker，包括电平、频率
+   *  (当前时刻的拷贝)
+   * @param name marker序号、名称
+   * @returns Marker
+   */
+  public getMarker(name: string): Marker {
+    return JSON.parse(JSON.stringify(this.attr.markers.get(name) ?? {}))
+  }
+
+  /**
+   * 获取所有marker
+   * (当前时刻的拷贝)
+   * @returns markers
+   */
+  public getMarkers(): Map<string, Marker> {
+    const result = new Map<string, Marker>()
+    this.attr.markers.forEach((value, key) => {
+      result.set(key, JSON.parse(JSON.stringify(value)))
+    })
+    return result
+  }
+
+  /**
+   * 设置marker频率
+   * @param markerName marker名称
+   * @param freq 频率
+   */
+  public setMarker(markerName: string, freq: number) {
+    if (!this.attr.markers.get(markerName)) {
+      return
+    }
+    this.attr.markers.get(markerName).freq = freq
+    this.gridLayer.reDrawMarkers()
+  }
+
+  /**
+   *
+   * @param freq 频率Hz
+   * @param name? 名称
+   * @returns marker名称
+   */
+  public addMarker(marker: number | Marker): string {
+    const isFreq = typeof marker == 'number'
+    const newMarker: Marker = {
+      freq: isFreq ? marker : marker.freq,
+      name: !isFreq && marker.name ? marker.name : 'marker' + this.attr.markerCur++,
+      level: !isFreq && marker.level ? marker.level : undefined,
+    }
+    this.attr.markers.set(newMarker.name, newMarker)
+    this.gridLayer.reDrawMarkers()
+    return newMarker.name
+  }
+
+  /**
+   * 移除marker,如果没有参数，则移除所有marker
+   * @param markerName marker名称
+   */
+  public removeMarker(...markerName: string[]) {
+    if (markerName.length == 0) {
+      this.attr.markers.clear()
+    } else {
+      markerName.forEach((element) => {
+        this.attr.markers.delete(element)
+      })
+    }
+    this.gridLayer.reDrawMarkers()
   }
 
   private registeEvent() {
@@ -178,7 +255,7 @@ export class Spectrum extends EventDispatcher implements FreqChangeable {
    * @returns
    */
   /* 判断是否处于中心 */
-  isInCenter(offsetX: number, offsetY: number): boolean {
+  private isInCenter(offsetX: number, offsetY: number): boolean {
     return (
       offsetX > this.AXIS_ORIGIN.x &&
       offsetY < this.dom.clientHeight - this.AXIS_ORIGIN.y &&
@@ -187,7 +264,7 @@ export class Spectrum extends EventDispatcher implements FreqChangeable {
     )
   }
   /* 判断促发最下方的滚动条 */
-  isInPosBar(offsetX: number, offsetY: number): boolean {
+  private isInPosBar(offsetX: number, offsetY: number): boolean {
     return (
       offsetY > this.dom.clientHeight - 15 &&
       offsetY < this.dom.clientHeight &&
@@ -196,13 +273,13 @@ export class Spectrum extends EventDispatcher implements FreqChangeable {
     )
   }
   /* 判断是否促发y轴 */
-  isInAxisY(offsetX: number, offsetY: number): boolean {
+  private isInAxisY(offsetX: number, offsetY: number): boolean {
     return (
       offsetX < this.AXIS_ORIGIN.x && offsetY < this.dom.clientHeight - this.AXIS_ORIGIN.y && offsetX > 0 && offsetY > 0
     )
   }
   /* 判断是否促发x轴 */
-  isInAxisX(offsetX: number, offsetY: number): boolean {
+  private isInAxisX(offsetX: number, offsetY: number): boolean {
     return (
       offsetY > this.dom.clientHeight - this.AXIS_ORIGIN.y &&
       offsetY < this.dom.clientHeight - 15 &&
@@ -363,7 +440,9 @@ export class Spectrum extends EventDispatcher implements FreqChangeable {
       this.threeLayer.resizeData(data.length)
       this.setViewFreqRange(this.startFreq, this.endFreq)
     }
+    this.attr.data = data
     this.threeLayer.update(data)
+    this.gridLayer.update(data)
   }
 
   /**
