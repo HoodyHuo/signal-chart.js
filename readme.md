@@ -69,8 +69,9 @@ const markerName = gram.addMarker({
 })
 
 // 调整marker
-setMarker(markerName: string, freq: number)
+setMarker(markerName: string, freq: number, level?: number)
 gram.setMarker("marker1",4000) //调整marker1 到4kHz
+gram.setMarker("marker1",1000,-20) // 调整marker1 到4kHz并绘制到-20dBm
 //
 
 

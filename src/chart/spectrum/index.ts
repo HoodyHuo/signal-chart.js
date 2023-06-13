@@ -102,11 +102,13 @@ export class Spectrum extends EventDispatcher implements FreqChangeable {
    * @param markerName marker名称
    * @param freq 频率
    */
-  public setMarker(markerName: string, freq: number) {
-    if (!this.attr.markers.get(markerName)) {
+  public setMarker(markerName: string, freq: number, level?: number) {
+    const marker = this.attr.markers.get(markerName)
+    if (!marker) {
       return
     }
-    this.attr.markers.get(markerName).freq = freq
+    marker.freq = freq
+    marker.level = level
     this.gridLayer.reDrawMarkers()
   }
 
