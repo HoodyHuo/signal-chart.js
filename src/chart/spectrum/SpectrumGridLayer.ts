@@ -215,7 +215,7 @@ export class SpectrogramGridLayer {
     const levelPercent = (level - this.lowLevel) / (this.highLevel - this.lowLevel)
     const yPx = (this.canvasMarker.height - this.AXIS_ORIGIN.y) * (1 - levelPercent)
     this.ctxMarker.beginPath()
-    this.ctxMarker.fillStyle = '#FFFFFF'
+    this.ctxMarker.fillStyle = '#FF696a'
     this.ctxMarker.moveTo(xPx, yPx)
     this.ctxMarker.lineTo(xPx - 5, yPx - 10)
     this.ctxMarker.lineTo(xPx + 5, yPx - 10)

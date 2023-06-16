@@ -25,7 +25,7 @@
     <button onclick="setMode(1)">最大保持</button>
     <button onclick="setMode(2)">最小保持</button>
     <button onclick="setMode(3)">平均</button>
-    <button onclick="getBorder()">获取截图</button>
+    <button onclick="getBorder()">边框数据</button>
     <br/>
     <input type="number" id="startFreq" value="0"/>
     <input type="number" id="endFreq" value="4800"/>
@@ -35,10 +35,8 @@
     <input type="number" id="endLevel" value="10"/>
     <button onclick="setLevel()">设置起止电平(dBm)</button>
 
-    <img id ="aa" ></img>
-
-    <div id="cont" class="cont" ></div>
     <div id="cont2" class="cont2"></div>
+    <div id="cont" class="cont" ></div>
     <script type="module" >
         
         import {Spectrum,Spectrogram,ConnectorGroup} from '../lib/signal-chart.js'
@@ -83,11 +81,6 @@
             const v = gram.getBorderValue()
             console.log(v)
             console.log(gram.getMarkers())
-            
-            const t1 = new Date().getTime()
-            const img = gram.getImageURL()
-            console.log(new Date().getTime() - t1)
-            document.getElementById("aa").src = img
         }
 
         window.setFreq= function(){
@@ -115,7 +108,7 @@
 
         gram.addMarker(1000)
         gram.addMarker({
-            freq:3000,
+            freq:4200,
             // level:-20
         })
         // animate
@@ -146,7 +139,7 @@
                     //取数下标更新
                     index += MAX_POINTS
                     
-                }, 1000/100)
+                }, 1000/1000)
 
             })
         
