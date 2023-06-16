@@ -294,6 +294,7 @@ export class SpectrogramThreeLayer extends Gram {
         this.data = data
         break
     }
+    this.attr.data = this.data
   }
   /**
    * 创建线段对象

@@ -53,6 +53,7 @@ export class Spectrum extends EventDispatcher implements FreqChangeable {
   constructor(options: SpectrogramOptions) {
     super()
     const fullOptions = mergeDefaultOption(options)
+    this.options = fullOptions
     this.dom = fullOptions.El
     this.dom.style.position = 'relative'
     this.dom.style.backgroundColor = fullOptions.color.background
@@ -143,6 +144,51 @@ export class Spectrum extends EventDispatcher implements FreqChangeable {
       })
     }
     this.gridLayer.reDrawMarkers()
+  }
+
+  /**
+   *获取当前图谱截图
+   * @returns base64-Url格式图像数据 , ImageData格式图像
+   */
+  public getImage(): [string, ImageData] {
+    const canvas = document.createElement('canvas')
+    const width = this.dom.clientWidth
+    const height = this.dom.clientHeight
+    canvas.height = height //指定画板的高度,自定义
+    canvas.width = width //指定画板的宽度，自定义
+    const ctx = canvas.getContext('2d')
+    ctx.fillStyle = this.options.color.background
+    ctx.fillRect(0, 0, width, height) //填充背景色
+    ctx.drawImage(this.gridLayer.canvasAxis, 0, 0) //填充网格
+    ctx.drawImage(this.gridLayer.canvasAxisX, 0, 0) //填充X轴
+    ctx.drawImage(this.gridLayer.canvasAxisY, 0, 0) //填充Y轴
+    ctx.drawImage(this.gridLayer.canvasScorll, 0, 0) //填充 滚动条
+    //填充 信号线条
+    ctx.drawImage(
+      this.threeLayer.renderer.domElement,
+      this.AXIS_ORIGIN.x,
+      0,
+      width - this.AXIS_ORIGIN.x,
+      height - this.AXIS_ORIGIN.y,
+    )
+    //填充 marker
+    ctx.drawImage(this.gridLayer.canvasMarker, 0, 0)
+    const dataURL = canvas.toDataURL('image/png')
+    return [dataURL, ctx.getImageData(0, 0, width, height)]
+  }
+  /**
+   *获取当前图谱截图
+   * @returns ImageData格式图像
+   */
+  public getImageData(): ImageData {
+    return this.getImage()[1]
+  }
+  /**
+   *获取当前图谱截图
+   * @returns base64-Url格式图像数据
+   */
+  public getImageURL(): string {
+    return this.getImage()[0]
   }
 
   private registeEvent() {

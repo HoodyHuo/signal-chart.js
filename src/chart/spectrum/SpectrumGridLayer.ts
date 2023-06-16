@@ -22,11 +22,11 @@ export class SpectrogramGridLayer {
 
   /**------------------------图像层元素--------------------------------- */
   /** canvas 元素 */
-  private canvasAxis: HTMLCanvasElement
-  private canvasMarker: HTMLCanvasElement
-  private canvasScorll: HTMLCanvasElement
-  private canvasAxisX: HTMLCanvasElement
-  private canvasAxisY: HTMLCanvasElement
+  canvasAxis: HTMLCanvasElement
+  canvasMarker: HTMLCanvasElement
+  canvasScorll: HTMLCanvasElement
+  canvasAxisX: HTMLCanvasElement
+  canvasAxisY: HTMLCanvasElement
   /** 挂载元素 */
   private parentDom: HTMLElement
   /** 绘制山下文 */
