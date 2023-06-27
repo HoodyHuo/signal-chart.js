@@ -81,8 +81,8 @@ export class SpectrogramThreeLayer extends Gram {
     this.camera.scale.set(1, this.camera.scale.y, 1)
     // 调整位置到数据中心
     const viewCenter: Position = this.getViewCenter()
-    this.camera.position.set(viewCenter.x, viewCenter.y, 0.1)
-    this.camera.lookAt(new THREE.Vector3(viewCenter.x, viewCenter.y, 0))
+    this.camera.position.set(viewCenter.x, this.camera.position.y, 0.1)
+    this.camera.lookAt(new THREE.Vector3(viewCenter.x, this.camera.position.y, 0))
     // 缩放数据到合适窗口
     const { left, right } = this.getBorderValue() //获取比例为1当前屏幕的显示范围
     const scale = (endX - startX) / (right - left) // 计算要显示的范围和当前的比例
@@ -108,8 +108,8 @@ export class SpectrogramThreeLayer extends Gram {
     this.camera.scale.set(this.camera.scale.x, 1, 1)
     // 调整位置到数据中心
     const viewCenter: Position = this.getViewCenter()
-    this.camera.position.set(viewCenter.x, viewCenter.y, 0.1)
-    this.camera.lookAt(new THREE.Vector3(viewCenter.x, viewCenter.y, 0))
+    this.camera.position.set(this.camera.position.x, viewCenter.y, 0.1)
+    this.camera.lookAt(new THREE.Vector3(this.camera.position.x, viewCenter.y, 0))
     // 缩放数据到合适窗口
     const { top, bottom } = this.getBorderValue() //获取比例为1当前屏幕的显示范围
     const scale = (highLevel - lowLevel) / (top - bottom) // 计算要显示的范围和当前的比例
