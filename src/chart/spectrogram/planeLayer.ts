@@ -1,8 +1,8 @@
-import { ColorMap } from '../../tool/ColorMap'
 import { makeCanvas } from '../common'
+import { ISpectrogram } from './ISpectrogram'
 import { FrameData, SpectrogramAttr, SpectrogramOptions } from './SpectrogramCommon'
 /** 平面图 */
-export class PlaneLayer {
+export class PlaneLayer implements ISpectrogram {
   // --------------------------------------- 基础属性-------------------------
   /** 挂载dom */
   private dom: HTMLElement
@@ -14,8 +14,7 @@ export class PlaneLayer {
   // --------------------------------------- Canvas 图层-------------------------
 
   /** 缓存图层，以点数为宽，缓存数为高，的原始尺寸语图 ，最新数据在上方 */
-  private cacheCanvas: HTMLCanvasElement
-  private cacheCtx: CanvasRenderingContext2D
+  private cacheImage: ImageData
 
   /** 图谱图层 ，挂载在页面，通过缩放计算缓存图层进行展示 */
   private chartCanvas: HTMLCanvasElement
@@ -29,22 +28,11 @@ export class PlaneLayer {
   private timeCanvas: HTMLCanvasElement
   private timeCtx: CanvasRenderingContext2D
 
-  /** 色谱 */
-  private color: ColorMap
-
   constructor(options: SpectrogramOptions, attr: SpectrogramAttr) {
     /** 从父层共享属性 */
     this.dom = options.El
     this.options = options
     this.attr = attr
-
-    /** 色谱构建 */
-    this.color = new ColorMap(options.color.front, 250) //TODO 颜色范围从其他区域设置
-
-    /** 创建内存缓存图层 */
-    this.cacheCanvas = this.createCacheCanvas()
-    this.cacheCtx = this.cacheCanvas.getContext('2d')
-    this.clear(this.cacheCtx)
 
     /** 创建绘制图层 */
     this.chartCanvas = makeCanvas(
@@ -56,6 +44,9 @@ export class PlaneLayer {
     this.chartCtx = this.chartCanvas.getContext('2d')
     this.clear(this.chartCtx)
     this.dom.appendChild(this.chartCanvas)
+
+    /** 创建内存缓存图层 */
+    this.cacheImage = this.createCache()
 
     /** 创建网格图层 */
     this.gridCanvas = makeCanvas(510, this.dom.clientHeight, this.dom.clientWidth)
@@ -146,16 +137,14 @@ export class PlaneLayer {
    * TODO 根据方向进行旋转
    */
   private drawToChart() {
-    const sh = this.cacheCanvas.height
-    const dw = this.chartCanvas.clientWidth
-    const dh = this.chartCanvas.clientHeight
     const 频率起点百分比 = (this.attr.startFreqView - this.attr.startFreq) / (this.attr.endFreq - this.attr.startFreq)
     const 频率终点百分比 = (this.attr.endFreqView - this.attr.startFreq) / (this.attr.endFreq - this.attr.startFreq)
     const 内存图起点X = 频率起点百分比 * this.options.fftLen
     const 内存终点X = 频率终点百分比 * this.options.fftLen
     const 显示宽度 = 内存终点X - 内存图起点X
     //绘制到显示图层
-    this.chartCtx.drawImage(this.cacheCanvas, 内存图起点X, 0, 显示宽度, sh, 0, 0, dw, dh)
+    // this.chartCtx.drawImage(this.cacheCanvas, 内存图起点X, 0, 显示宽度, sh, 0, 0, dw, dh)
+    this.chartCtx.putImageData(this.cacheImage, 0, 0, 内存图起点X, 0, 显示宽度, this.options.cacheCount)
   }
 
   /**
@@ -163,25 +152,21 @@ export class PlaneLayer {
    * @param fd 帧数据
    */
   private appendLine(fd: FrameData) {
-    // 创建宽度为FFT长度的图像，高度为1
-    const imageLine = this.cacheCtx.createImageData(fd.data.length, 1)
-    // 对每个点位进行颜色赋值
-    for (let i = 0; i < imageLine.data.length; i += 4) {
-      const value = fd.data[i / 4]
-      const color = this.findColor(value)
-      imageLine.data[i + 0] = color[0]
-      imageLine.data[i + 1] = color[1]
-      imageLine.data[i + 2] = color[2]
-      imageLine.data[i + 3] = color[3]
-    }
     // 图形向下移动1像素
-    const oldImg = this.cacheCanvas
-    const sw = this.cacheCanvas.width
-    const sh = this.cacheCanvas.height
-    this.cacheCtx.drawImage(oldImg, 0, 0, sw, sh - 1, 0, 1, sw, sh - 1)
+    const frameLenImge = fd.data.length * 4
+    const cache = this.cacheImage.data
+    cache.copyWithin(frameLenImge, 0, cache.length - frameLenImge)
 
-    // 将新的色添加到图像上
-    this.cacheCtx.putImageData(imageLine, 0, 0)
+    // 对每个点位进行颜色赋值
+    for (let i = 0; i < fd.data.length; i++) {
+      const value = fd.data[i]
+      const index = i * 4
+      const color = this.findColor(value)
+      cache[index + 0] = color[0]
+      cache[index + 1] = color[1]
+      cache[index + 2] = color[2]
+      cache[index + 3] = color[3]
+    }
   }
   /**
    *  获取色值
@@ -196,18 +181,17 @@ export class PlaneLayer {
     v = value < low ? low : value
     v = v > hi ? hi : v
     v = Math.round(v - low)
-    const color = this.color.getColor(v)
+    const color = this.attr.color.getColor(v)
     return color
   }
   /**
    * 创建内存canvas ，以FFT点数为宽度，缓存数为高度
    * @returns 缓存canvas
    */
-  private createCacheCanvas(): HTMLCanvasElement {
+  private createCache(): ImageData {
     const canvas = document.createElement('canvas')
-    canvas.height = this.options.cacheCount
-    canvas.width = this.options.fftLen
-    return canvas
+    const ctx = canvas.getContext('2d')
+    return ctx.createImageData(this.options.fftLen, this.options.cacheCount)
   }
 
   /**
