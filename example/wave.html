@@ -5,7 +5,7 @@
 <head>
     <meta charset='utf-8'>
     <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-    <title>Page Title</title>
+    <title>波形图</title>
     <script src="axios.js"></script>
     <style>
         .cont{
@@ -32,8 +32,8 @@
     <script type="module" >
         
         import {WaveForm} from '../lib/signal-chart.js'
-        const MAX_POINTS  = 256 // 4800 
-        const cacheCount = 48000
+        const MAX_POINTS  = 4800 // 4800 
+        const cacheCount = 480000
         const  gram = new WaveForm({
             El:document.getElementById('cont'),
             cache:cacheCount,
@@ -83,7 +83,7 @@
                     //取数下标更新
                     index += MAX_POINTS
                     
-                }, 1000/36)
+                }, 1000/1000)
 
             })
         

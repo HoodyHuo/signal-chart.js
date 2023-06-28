@@ -4,9 +4,8 @@
 <head>
     <meta charset='utf-8'>
     <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-    <title>Page Title</title>
+    <title>频谱-3D语图</title>
     <script src="axios.js"></script>
-    <script src="/lib/signal-chart.umd.js"></script>
     <style>
         .cont{
             height: 400px;
@@ -40,13 +39,10 @@
 
     <div id="cont" class="cont" ></div>
     <div id="cont2" class="cont2"></div>
-    <script >
+    <script type="module" >
         
-        const Spectrum = SignalChart.Spectrum
-        const Spectrogram = SignalChart.Spectrogram
-        const ConnectorGroup = SignalChart.ConnectorGroup
-debugger
-        const MAX_POINTS  = 4800 * 2
+        import {Spectrum,Spectrogram,ConnectorGroup} from '../lib/signal-chart.js'
+        const MAX_POINTS  = 4800
         const cacheCount = 500
         const gram = new Spectrum({
             keepMode: 0, // 保持模式 0 刷新 1 最大 2 最小 3 平均
@@ -68,7 +64,7 @@ debugger
                 front: ['black','blue','green','red','yellow','white'],
                 background:"#11FFFF"
             },
-            type:0,
+            type:1,
             fftLen:MAX_POINTS
         })
 
