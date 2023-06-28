@@ -114,10 +114,11 @@ class WaveFormThreeLayer {
   }
   private moveLine(movement: number) {
     const data = this.drawData
-    for (let i = 0; i < this.options.cache; i++) {
+    const len = this.options.cache - movement
+    for (let i = 0; i < len; i++) {
       data[i * 3] += movement
     }
-    data.set(data.slice(0, data.length - movement * 3), movement * 3)
+    data.copyWithin(movement * 3, 0, data.length - movement * 3)
   }
   /**
    * 将dom坐标转化为世界坐标

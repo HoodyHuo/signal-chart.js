@@ -63,7 +63,7 @@ class WaveForm {
     if (data.length > cache.length) {
       cache.set(data.slice(data.length - cache.length, data.length))
     } else {
-      cache.set(cache.slice(0, cache.length - data.length), data.length)
+      cache.copyWithin(data.length, 0, cache.length - data.length)
       cache.set(data, 0)
     }
     this.updateData(data) //子类实现绘制方法
