@@ -42,7 +42,7 @@
     <script type="module" >
         
         import {Spectrum,Spectrogram,ConnectorGroup} from '../lib/signal-chart.js'
-        const MAX_POINTS  = 100000//16384 *5 //4800 
+        const MAX_POINTS  = 4800 *20 //500帧缓存  200000：15、  150000：20 、 100000：30 、50000：60
         const cacheCount = 500
         const gram = new Spectrum({
             keepMode: 0, // 保持模式 0 刷新 1 最大 2 最小 3 平均
@@ -129,8 +129,11 @@
                 //     const b  =  dv.getFloat32(i*4,false) 
                 //     float32Arr[i] = b
                 // }
-
-                const float32Arr = new Float32Array(bitData)
+                const dd = new Float32Array(bitData)
+                const float32Arr = new Float32Array(dd.length * 100)
+                for(let i = 0;i< 100;i++){
+                    float32Arr.set(dd,dd.length * i)
+                }
                 let index = 0
                 setInterval(function () {
                     // 如果下标超出数据范围，重新移动到0

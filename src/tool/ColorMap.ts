@@ -19,6 +19,8 @@ export class ColorMap {
   /** 通过色值生成的渐变图像 */
   private imageData: ImageData
 
+  private cache: Uint8ClampedArray
+
   /**
    * 构造色谱
    * @param colors 颜色数组，支持 CSS 颜色
@@ -28,6 +30,7 @@ export class ColorMap {
     if (colors?.length < 2) {
       throw new Error('色谱颜色至少需要2个')
     }
+    this.cache = new Uint8ClampedArray(4)
 
     this.colors = colors
     this.count = count
@@ -55,11 +58,11 @@ export class ColorMap {
    * @param value 色谱的下标（ 0 至 count-1）
    * @returns
    */
-  public getColor(value: number): Uint8ClampedArray {
+  public getColor(value: number): number {
     let v = value < 0 ? 0 : value
     v = v > this.count - 1 ? this.count - 1 : v
     const index = v * 4
 
-    return this.imageData.data.slice(index, index + 4)
+    return index
   }
 }
