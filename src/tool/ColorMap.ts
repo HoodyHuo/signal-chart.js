@@ -54,7 +54,7 @@ export class ColorMap {
   }
 
   /**
-   * 获取颜色数组 依次是 RGBA
+   * 获取颜色数组的开始位置
    * @param value 色谱的下标（ 0 至 count-1）
    * @returns
    */

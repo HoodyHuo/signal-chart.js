@@ -60,6 +60,7 @@
             cacheCount: cacheCount,
             Performance: true, // 是否打开性能监视窗口
             El: document.getElementById("cont2"), // 图形绘制节点 
+            HORIZONTAL_AXIS_MARGIN: 10,
             color:{
                 front: ['black','blue','green','red','yellow','white'],
                 background:"#11FFFF"
@@ -135,14 +136,14 @@
                     float32Arr.set(dd,dd.length * i)
                 }
                 let index = 0
-                setInterval(function () {
-                    // 如果下标超出数据范围，重新移动到0
-                    if (index + MAX_POINTS > float32Arr.length) {
+                function updateData(){
+                   // 如果下标超出数据范围，重新移动到0
+                   if (index + MAX_POINTS > float32Arr.length) {
                         index = 0
                     }
                     // 根据下标，从总数据包中取出接下来的一段，因为数据包含XYZ，所以长度要取 3倍
                     const data = float32Arr.slice(index, index + MAX_POINTS )
-                    gram.update(data)
+                    gram.update(data) 
                     gram2.update({
                         time:new Date().getTime(),
                         data:gram.threeLayer.data
@@ -150,8 +151,11 @@
                     //取数下标更新
                     index += MAX_POINTS
                     
-                }, 1000/1000)
-
+                    setTimeout(function () {
+                        updateData()
+                    }, 1000/250)
+            }
+            updateData()
             })
         
              
