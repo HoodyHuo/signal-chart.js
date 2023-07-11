@@ -32,7 +32,7 @@
     <script type="module" >
         
         import {WaveForm} from '../lib/signal-chart.js'
-        const MAX_POINTS  = 4800 // 4800 
+        const MAX_POINTS  = 256 // 4800 
         const cacheCount = 480000
         const  gram = new WaveForm({
             El:document.getElementById('cont'),
@@ -83,7 +83,7 @@
                     //取数下标更新
                     index += MAX_POINTS
                     
-                }, 1000/1000)
+                }, 1000/60)
 
             })
         

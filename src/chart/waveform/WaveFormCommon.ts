@@ -14,7 +14,10 @@ export type WaveFormAttr = {
   /** 是否暂停状态 */
   isSuspend: boolean
 }
-
+export enum WaveFormDirection {
+  LEFT = 'left',
+  RIGHT = 'right',
+}
 export interface WaveFormOptions extends GramOptions {
   /** 采样率 */
   simpleRate: number
@@ -24,6 +27,8 @@ export interface WaveFormOptions extends GramOptions {
   rangeMax: number
   /** 值最小 */
   rangeMin: number
+  /** 波形图移动方向 */
+  direction?: WaveFormDirection
   /** 颜色配置 */
   color?: {
     /** 图色谱 颜色字符串 如 '#FFFFFF'*/
@@ -48,6 +53,7 @@ export function mergeDefaultOption(options: WaveFormOptions): WaveFormOptions {
     El: document.createElement('div'),
     /** 采样率 */
     simpleRate: 9600,
+    direction: WaveFormDirection.RIGHT,
     cache: (9600 / 2) * 5,
     /** 值最大 */
     rangeMax: 32768,

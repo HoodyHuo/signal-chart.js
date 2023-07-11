@@ -15,7 +15,7 @@ import {
   Vector2,
 } from 'three'
 import { Position } from '../common'
-import { WaveFormAttr, WaveFormOptions } from './WaveFormCommon'
+import { WaveFormAttr, WaveFormDirection, WaveFormOptions } from './WaveFormCommon'
 
 class WaveFormThreeLayer {
   private options: WaveFormOptions
@@ -58,9 +58,15 @@ class WaveFormThreeLayer {
     this.geometry = lineGeometry
     //构建线
     this.line = new Line(lineGeometry, lineMaterial)
-    this.line.rotation.y = Math.PI
-    this.line.translateX(-this.options.cache)
+    this.setDirection(this.options.direction)
+
     this.scene.add(this.line)
+  }
+  setDirection(direction: WaveFormDirection) {
+    if (direction === WaveFormDirection.LEFT) {
+      this.line.rotation.y = Math.PI
+      this.line.translateX(-this.options.cache)
+    }
   }
   initData(drawData: Float32Array) {
     for (let i = 0; i < drawData.length / 3; i++) {
