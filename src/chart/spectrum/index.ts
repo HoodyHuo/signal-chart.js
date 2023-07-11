@@ -1,5 +1,5 @@
 import { SpectrogramThreeLayer } from './SpectrumThreeLayer'
-import { KeepMode, Marker, mergeDefaultOption, SpectrogramOptions, SpectrumAttr } from './SpectrumCommon'
+import { KeepMode, Marker, MarkerLine, mergeDefaultOption, SpectrogramOptions, SpectrumAttr } from './SpectrumCommon'
 import { SpectrogramGridLayer } from './SpectrumGridLayer'
 import { Position } from '../common'
 import { EventDispatcher } from 'three'
@@ -62,6 +62,7 @@ export class Spectrum extends EventDispatcher implements FreqChangeable {
       markers: new Map<string, Marker>(),
       markerCur: 1,
       data: new Float32Array(),
+      markerLines: new Map<string, MarkerLine>(),
     }
 
     this.threeLayer = new SpectrogramThreeLayer(fullOptions, this.attr)
@@ -144,6 +145,26 @@ export class Spectrum extends EventDispatcher implements FreqChangeable {
       })
     }
     this.gridLayer.reDrawMarkers()
+  }
+
+  /** 添加标线 */
+  public setMarkerLine(...lines: MarkerLine[]) {
+    for (const line of lines) {
+      line.color = line.color ?? '#f50505'
+      this.attr.markerLines.set(line.name, line)
+      this.threeLayer.setMarkerLine(line)
+    }
+  }
+
+  /** 移除标线 */
+  public removeMarkerLine(...lines: MarkerLine[] | string[]) {
+    for (const line of lines) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const lineObj = this.attr.markerLines.get(line.name ?? line)
+      this.threeLayer.removeMarkerLine(lineObj)
+      this.attr.markerLines.delete(lineObj.name)
+    }
   }
 
   /**
@@ -506,10 +527,5 @@ export class Spectrum extends EventDispatcher implements FreqChangeable {
       left: border.left * fpp + this.startFreq,
       right: border.right * fpp + this.startFreq,
     }
-  }
-
-  /** 临时函数，用于绘制线图的包围框 */
-  public getProject() {
-    const p = this.threeLayer.getProject()
   }
 }

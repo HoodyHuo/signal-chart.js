@@ -7,12 +7,13 @@
     <title>频谱-语图</title>
     <script src="axios.js"></script>
     <style>
-        .cont{
+        .cont {
             height: 400px;
             width: 700px;
             background-color: #3ed630;
         }
-        .cont2{
+
+        .cont2 {
             height: 400px;
             width: 700px;
             background-color: #3083d6;
@@ -26,139 +27,149 @@
     <button onclick="setMode(2)">最小保持</button>
     <button onclick="setMode(3)">平均</button>
     <button onclick="getBorder()">获取截图</button>
-    <br/>
-    <input type="number" id="startFreq" value="0"/>
-    <input type="number" id="endFreq" value="4800"/>
+    <br />
+    <input type="number" id="startFreq" value="0" />
+    <input type="number" id="endFreq" value="4800" />
     <button onclick="setFreq()">设置起止频率(Hz)</button>
-    <br/>
-    <input type="number" id="startLevel" value="-180"/>
-    <input type="number" id="endLevel" value="10"/>
+    <br />
+    <input type="number" id="startLevel" value="-180" />
+    <input type="number" id="endLevel" value="10" />
     <button onclick="setLevel()">设置起止电平(dBm)</button>
 
-    <img id ="aa" ></img>
+    <img id="aa"></img>
 
-    <div id="cont" class="cont" ></div>
+    <div id="cont" class="cont"></div>
     <div id="cont2" class="cont2"></div>
-    <script type="module" >
-        
-        import {Spectrum,Spectrogram,ConnectorGroup} from '../lib/signal-chart.js'
-        const MAX_POINTS  = 10*10000 //500帧缓存  200000：15、  150000：20 、 100000：30 、50000：60
+    <script type="module">
+
+        import { Spectrum, Spectrogram, ConnectorGroup } from '../lib/signal-chart.js'
+        const MAX_POINTS = 10 * 10000 //500帧缓存  200000：15、  150000：20 、 100000：30 、50000：60
         const cacheCount = 500
         const gram = new Spectrum({
             keepMode: 0, // 保持模式 0 刷新 1 最大 2 最小 3 平均
             cacheCount: cacheCount,
+            fftLen: MAX_POINTS,
             Performance: true, // 是否打开性能监视窗口
             El: document.getElementById("cont"), // 图形绘制节点 
             HORIZONTAL_AXIS_MARGIN: 10,
-            color:{
-                background:'#999999',
-                line:"#000000", 
+            color: {
+                background: '#999999',
+                line: "#000000",
             }
         })
+        gram.setMarkerLine({ name: 'b', level: -25,})
+        setTimeout(() => {
+            gram.setMarkerLine({ name: 'b', level: -30, color: '#00ff00'  })
+        }, 3000)
+        setTimeout(() => {
+            gram.setMarkerLine({ name: 'b', level: -170, color: '#1a02ec' })
+        }, 6000)
+
+     
 
         const gram2 = new Spectrogram({
             cacheCount: cacheCount,
             Performance: true, // 是否打开性能监视窗口
             El: document.getElementById("cont2"), // 图形绘制节点 
             HORIZONTAL_AXIS_MARGIN: 10,
-            color:{
-                front: ['black','blue','green','red','yellow','white'],
-                background:"#11FFFF"
+            color: {
+                front: ['black', 'blue', 'green', 'red', 'yellow', 'white'],
+                background: "#11FFFF"
             },
-            type:0,
-            fftLen:MAX_POINTS
+            type: 0,
+            fftLen: MAX_POINTS
         })
 
         document.getElementById('cont')
-        .addEventListener('mousemove',(event)=>{
-            console.log(gram.getMarkerValue(event.offsetX,event.offsetY))
-            if(event.altKey){
-                const c = gram.getProject()
-            }
-            
-        })
-        window.setMode = function(mode){
+            .addEventListener('mousemove', (event) => {
+                console.log(gram.getMarkerValue(event.offsetX, event.offsetY))
+                if (event.altKey) {
+                    const c = gram.getProject()
+                }
+
+            })
+        window.setMode = function (mode) {
             gram.setKeepMode(mode)
         }
 
-        window.getBorder = function(){
+        window.getBorder = function () {
             const v = gram.getBorderValue()
             console.log(v)
             console.log(gram.getMarkers())
-            
+
             const t1 = new Date().getTime()
             const img = gram.getImageURL()
             console.log(new Date().getTime() - t1)
             document.getElementById("aa").src = img
         }
 
-        window.setFreq= function(){
+        window.setFreq = function () {
             const s = document.getElementById("startFreq").value
             const e = document.getElementById("endFreq").value
-            gram.setViewFreqRange(parseInt(s),parseInt(e))
+            gram.setViewFreqRange(parseInt(s), parseInt(e))
             // gram2.setViewFreqRange(parseInt(s),parseInt(e))
 
         }
 
-        window.setLevel= function(){
+        window.setLevel = function () {
             const s = document.getElementById("startLevel").value
             const e = document.getElementById("endLevel").value
-            gram.setViewLevelRange(parseInt(s),parseInt(e))
+            gram.setViewLevelRange(parseInt(s), parseInt(e))
         }
 
-        const connector = new ConnectorGroup(gram,gram2)
+        const connector = new ConnectorGroup(gram, gram2)
 
         //设置当前图谱的频率范围
         // gram.setFreqRange(-4800,4800)
-        gram2.setFreqRange(0,4800)
+        gram2.setFreqRange(0, 4800)
         //设置可视区域的范围
         window.setLevel()
         window.setFreq()
 
         gram.addMarker(1000)
         gram.addMarker({
-            freq:3000,
+            freq: 3000,
             // level:-20
         })
         // animate
         axios.get('./fftData-4.dat', { responseType: 'arraybuffer' }).then(res => {
-                const bitData = res.data
-                // 取出1000帧
-                // const dv = new DataView(bitData)
-                // const float32Arr = new Float32Array(bitData.byteLength/4)
-                // for(let i = 0;i<bitData.byteLength/4;i++){
-                //     const b  =  dv.getFloat32(i*4,false) 
-                //     float32Arr[i] = b
-                // }
-                const dd = new Float32Array(bitData)
-                const float32Arr = new Float32Array(dd.length * 100)
-                for(let i = 0;i< 100;i++){
-                    float32Arr.set(dd,dd.length * i)
+            const bitData = res.data
+            // 取出1000帧
+            // const dv = new DataView(bitData)
+            // const float32Arr = new Float32Array(bitData.byteLength/4)
+            // for(let i = 0;i<bitData.byteLength/4;i++){
+            //     const b  =  dv.getFloat32(i*4,false) 
+            //     float32Arr[i] = b
+            // }
+            const dd = new Float32Array(bitData)
+            const float32Arr = new Float32Array(dd.length * 100)
+            for (let i = 0; i < 100; i++) {
+                float32Arr.set(dd, dd.length * i)
+            }
+            let index = 0
+            function updateData() {
+                // 如果下标超出数据范围，重新移动到0
+                if (index + MAX_POINTS > float32Arr.length) {
+                    index = 0
                 }
-                let index = 0
-                function updateData(){
-                   // 如果下标超出数据范围，重新移动到0
-                   if (index + MAX_POINTS > float32Arr.length) {
-                        index = 0
-                    }
-                    // 根据下标，从总数据包中取出接下来的一段，因为数据包含XYZ，所以长度要取 3倍
-                    const data = float32Arr.slice(index, index + MAX_POINTS )
-                    gram.update(data) 
-                    gram2.update({
-                        time:new Date().getTime(),
-                        data:data
-                    })
-                    //取数下标更新
-                    index += MAX_POINTS
-                    
-                    setTimeout(function () {
-                        updateData()
-                    }, 0)
+                // 根据下标，从总数据包中取出接下来的一段，因为数据包含XYZ，所以长度要取 3倍
+                const data = float32Arr.slice(index, index + MAX_POINTS)
+                gram.update(data)
+                gram2.update({
+                    time: new Date().getTime(),
+                    data: data
+                })
+                //取数下标更新
+                index += MAX_POINTS
+
+                setTimeout(function () {
+                    updateData()
+                }, 0)
             }
             updateData()
-            })
-        
-             
+        })
+
+
     </script>
 
 </body>

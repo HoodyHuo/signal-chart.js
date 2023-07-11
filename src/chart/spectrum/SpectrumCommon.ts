@@ -32,6 +32,15 @@ export interface Marker {
 }
 
 /**
+ * 固定标线
+ */
+export interface MarkerLine {
+  color?: string
+  level: number
+  name: string
+}
+
+/**
  * 转换FFT数组到绘制数组
  * @param dist 绘制数据缓冲区
  * @param src  频谱FFT数据
@@ -93,7 +102,12 @@ export function mergeDefaultOption(options: SpectrogramOptions): SpectrogramOpti
 }
 
 export interface SpectrumAttr {
+  /** 三角标记 */
   markers: Map<string, Marker>
+  /** 标记计数器 */
   markerCur: number
+  /** 当前帧缓存 */
   data: Float32Array
+  /** 线型标记 */
+  markerLines: Map<string, MarkerLine>
 }

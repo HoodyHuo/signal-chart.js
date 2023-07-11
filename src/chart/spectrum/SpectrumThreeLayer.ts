@@ -2,7 +2,7 @@ import Gram from './Gram'
 import * as THREE from 'three'
 import { Queue } from '../../tool/Queue'
 import { Plane } from 'three'
-import { convertToDrawData, KeepMode, Marker, SpectrogramOptions, SpectrumAttr } from './SpectrumCommon'
+import { convertToDrawData, KeepMode, MarkerLine, SpectrogramOptions, SpectrumAttr } from './SpectrumCommon'
 import { Position } from '../common'
 
 /**
@@ -39,8 +39,12 @@ export class SpectrogramThreeLayer extends Gram {
   private viewLeft = 0
   private viewRight = 10000
 
-  //线条
+  //频谱线条
   private line: THREE.Line
+
+  //标线
+  private markerLines: Map<string, THREE.Line>
+
   /** ------------------------ 辅助 ------------------------------- */
   /**投影射线工具 */
   private raycaster: THREE.Raycaster = new THREE.Raycaster()
@@ -53,6 +57,7 @@ export class SpectrogramThreeLayer extends Gram {
     super(options)
     this.options = options
     this.attr = attr
+    this.markerLines = new Map<string, THREE.Line>()
     this.keepMode = options.keepMode
     /**创建帧缓存 */
     this.recentCache = new Queue<Float32Array>(options.cacheCount)
@@ -255,6 +260,13 @@ export class SpectrogramThreeLayer extends Gram {
     this.scene.remove(this.line)
     this.line = this.createLine(pointCount, this.drawData)
     this.scene.add(this.line)
+
+    // 集中处理markerline的起止点
+    this.markerLines.forEach((line, name) => {
+      const dataArray = line.geometry.attributes.position.array as Float32Array
+      dataArray[3] = pointCount
+      line.geometry.attributes.position.needsUpdate = true
+    })
   }
   /**
    * 根据保持模式进行数据预处理
@@ -316,5 +328,57 @@ export class SpectrogramThreeLayer extends Gram {
     //构建线
     const line = new THREE.Line(lineGeometry, lineMaterial)
     return line
+  }
+
+  /**
+   * 设置标线,如果不存在，则创建
+   * @param line 标线参数
+   */
+  setMarkerLine(line: MarkerLine) {
+    //获取是否已存在
+    const lineInSence = this.markerLines.get(line.name)
+    // 如果已经存在标线，则更新颜色和高度
+    if (lineInSence) {
+      const material = lineInSence.material as THREE.LineBasicMaterial
+      material.color = new THREE.Color(line.color)
+      const dataArray = lineInSence.geometry.attributes.position.array as Float32Array
+      dataArray[1] = line.level
+      dataArray[4] = line.level
+      lineInSence.geometry.attributes.position.needsUpdate = true
+      this.renderer.render(this.scene, this.camera) // 渲染更新
+    }
+    // 如果不存在，则创建新标线
+    else {
+      //构建线几何体（缓冲型）
+      const lineGeometry = new THREE.BufferGeometry()
+      //构建线材质
+      const lineMaterial = new THREE.LineBasicMaterial({
+        color: line.color,
+      })
+      const drawData = new Float32Array([0, line.level, 0, this.options.fftLen, line.level, 0])
+      lineGeometry.setAttribute('position', new THREE.BufferAttribute(drawData, 3))
+      // drawcalls 设置绘制 点数，
+      lineGeometry.setDrawRange(0, 2)
+      //构建线
+      const lineView = new THREE.Line(lineGeometry, lineMaterial)
+      this.scene.add(lineView)
+      this.markerLines.set(line.name, lineView)
+    }
+
+    this.render()
+  }
+  /**
+   * 移除标线
+   * @param line 标线配置
+   * @returns null
+   */
+  removeMarkerLine(line: MarkerLine) {
+    const lineView = this.markerLines.get(line.name)
+    if (!lineView) {
+      return
+    }
+    this.scene.remove(lineView)
+    this.markerLines.delete(line.name)
+    this.render()
   }
 }
