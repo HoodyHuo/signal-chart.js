@@ -52,7 +52,7 @@ export class MatrixCanvas {
     for (let i = 0; i < this.ctxList.length; i++) {
       const ctx = this.ctxList[i]
       const can = ctx.canvas
-      ctx.drawImage(ctx.canvas, 0, 0, can.width, can.height, 0, 1, can.width, can.height)
+      ctx.drawImage(ctx.canvas, 0, 0, can.width, can.height, 0, movement, can.width, can.height)
     }
   }
 

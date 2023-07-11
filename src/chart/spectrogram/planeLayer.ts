@@ -77,8 +77,13 @@ export class PlaneLayer implements ISpectrogram {
    * @param fd 语图帧数据
    */
   public update(fd: FrameData) {
+    // 图形处理
     this.appendLine(fd)
     this.drawToChart()
+    // 网格处理
+    // TODO
+    const timeFD = this.attr.recentCache.see(375)
+    new Date(timeFD.time).toTimeString()
   }
 
   /**

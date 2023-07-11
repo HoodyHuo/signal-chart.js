@@ -42,7 +42,7 @@
     <script type="module" >
         
         import {Spectrum,Spectrogram,ConnectorGroup} from '../lib/signal-chart.js'
-        const MAX_POINTS  = 4800 *20 //500帧缓存  200000：15、  150000：20 、 100000：30 、50000：60
+        const MAX_POINTS  = 10*10000 //500帧缓存  200000：15、  150000：20 、 100000：30 、50000：60
         const cacheCount = 500
         const gram = new Spectrum({
             keepMode: 0, // 保持模式 0 刷新 1 最大 2 最小 3 平均
@@ -146,14 +146,14 @@
                     gram.update(data) 
                     gram2.update({
                         time:new Date().getTime(),
-                        data:gram.threeLayer.data
+                        data:data
                     })
                     //取数下标更新
                     index += MAX_POINTS
                     
                     setTimeout(function () {
                         updateData()
-                    }, 1000/250)
+                    }, 0)
             }
             updateData()
             })
