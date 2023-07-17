@@ -243,13 +243,16 @@ export class Spectrum extends EventDispatcher implements FreqChangeable {
     this.dom.addEventListener('mousemove', (event: Event) => {
       event.preventDefault()
       const e = event as MouseEvent // 强制类型为 滚动鼠标事件
-      const p = {
-        x: Math.round(this.getMarkerValue(e.offsetX - this.AXIS_ORIGIN.x, e.offsetY).x),
-        y: Math.round(this.getMarkerValue(e.offsetX - this.AXIS_ORIGIN.x, e.offsetY).y),
-        gridx: e.offsetX,
-        gridy: e.offsetY,
+      if (this.isInCenter(e.offsetX, e.offsetY)) {
+        this.mouseFocus(e.offsetX, e.offsetY)
       }
       if (e.buttons > 0) {
+        const p = {
+          x: Math.round(this.getMarkerValue(e.offsetX - this.AXIS_ORIGIN.x, e.offsetY).x),
+          y: Math.round(this.getMarkerValue(e.offsetX - this.AXIS_ORIGIN.x, e.offsetY).y),
+          gridx: e.offsetX,
+          gridy: e.offsetY,
+        }
         switch (MoseType) {
           case MouseEnum.ScrollX:
             this.moveGridX(e.movementX)
@@ -418,7 +421,17 @@ export class Spectrum extends EventDispatcher implements FreqChangeable {
     const newBottom = newTop + newLen
     this.setViewLevelRange(newBottom, newTop)
   }
-
+  /**
+   * 鼠标移动位置
+   * @param offsetX 鼠标聚焦频点
+   * @param offsetY 缩放比例
+   */
+  public mouseFocus(offsetX: number, offsetY: number) {
+    const markVal = this.getMarkerValue(offsetX, offsetY)
+    const freq = markVal.x
+    const level = markVal.y
+    this.gridLayer.drawMouseCenter(offsetX, offsetY, freq, level)
+  }
   /**
    * 设置总图谱数据的起止频率范围（HZ）
    * @param startFreq 起点频率

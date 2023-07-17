@@ -37,10 +37,11 @@
         const  gram = new WaveForm({
             El:document.getElementById('cont'),
             cache:cacheCount,
+            direction:'right'
         })
         document.getElementById('cont')
         .addEventListener('mousemove',(event)=>{
-            console.log(gram.getMarkerValue(event.offsetX,event.offsetY))
+            // console.log(gram.getMarkerValue(event.offsetX,event.offsetY))
             if(event.altKey){
                 const c = gram.getProject()
             }

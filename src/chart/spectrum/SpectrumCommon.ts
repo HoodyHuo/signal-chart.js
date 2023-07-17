@@ -65,6 +65,8 @@ export interface Color {
   label?: string
   /** 折线色 */
   line?: string
+  /** 鼠标焦点中心绘线图*/
+  focusLine?: string
 }
 
 /**
@@ -95,6 +97,7 @@ export function mergeDefaultOption(options: SpectrogramOptions): SpectrogramOpti
       axis: '#FFFFFF', // 轴色
       label: '#FFFFFF', // 轴标签色
       line: '#3ed630', // 折线色
+      focusLine: '#f50505', //鼠标焦点线图
     },
   }
   Object.assign(defaultOption, options)

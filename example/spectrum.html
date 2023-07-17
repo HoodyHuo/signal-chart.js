@@ -38,22 +38,49 @@
     <img id ="aa" ></img>
 
     <div id="cont2" class="cont2"></div>
+    <div id="cont" class="cont" ></div>
+
     <script type="module" >
-        
+
         import {Spectrum,Spectrogram,ConnectorGroup} from '../lib/signal-chart.js'
         const MAX_POINTS  = 100000//16384 *5 //4800 
         const cacheCount = 500
         const gram2 = new Spectrogram({
             cacheCount: cacheCount,
-            Performance: true, // 是否打开性能监视窗口
+            Performance: false, // 是否打开性能监视窗口
             El: document.getElementById("cont2"), // 图形绘制节点 
             color:{
                 front: ['black','blue','green','red','yellow','white'],
-                background:"#11FFFF"
+                background:"#11FFFF",
+                label: "#ffffff",
+                axis: "#ffffff"
             },
             type:0,
             fftLen:MAX_POINTS
         })
+
+        document.getElementById('cont')
+        .addEventListener('mousemove',(event)=>{
+            // console.log(gram.getMarkerValue(event.offsetX,event.offsetY))
+            if(event.altKey){
+                const c = gram.getProject()
+            }
+            
+        })
+        window.setMode = function(mode){
+            gram.setKeepMode(mode)
+        }
+
+        window.getBorder = function(){
+            const v = gram.getBorderValue()
+            console.log(v)
+            console.log(gram.getMarkers())
+            
+            const t1 = new Date().getTime()
+            const img = gram.getImageURL()
+            console.log(new Date().getTime() - t1)
+            document.getElementById("aa").src = img
+        }
 
         window.setFreq= function(){
             const s = document.getElementById("startFreq").value
@@ -102,7 +129,7 @@
                     //取数下标更新
                     index += MAX_POINTS
                     
-                }, 1000/1000)
+                }, 1000/30)
 
             })
         

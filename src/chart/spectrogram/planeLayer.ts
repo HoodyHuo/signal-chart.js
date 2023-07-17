@@ -1,8 +1,17 @@
 import { MatrixCanvas } from '../../tool/MatrixCanvas'
-import { makeCanvas } from '../common'
+import { makeCanvas, toDisplayFreq } from '../common'
 import { ISpectrogram } from './ISpectrogram'
 import { FrameData, SpectrogramAttr, SpectrogramOptions } from './SpectrogramCommon'
 /** 平面图 */
+const shortLen = 15
+/** 鼠标事件类型 */
+enum MouseEnum {
+  ScrollY,
+  ScrollX,
+  ScrollBar,
+  SelectRange,
+  None,
+}
 export class PlaneLayer implements ISpectrogram {
   // --------------------------------------- 基础属性-------------------------
   /** 挂载dom */
@@ -11,7 +20,13 @@ export class PlaneLayer implements ISpectrogram {
   private options: SpectrogramOptions
   /** 共享属性 */
   private attr: SpectrogramAttr
-
+  /**
+   * 创建网格缓存数组，用于绘制网格
+   * @param gridCache 缓存数组
+   * @param x x轴数组
+   * @param y y轴数组
+   */
+  private gridCache: { x: number[]; y: number[] }
   // --------------------------------------- Canvas 图层-------------------------
 
   /** 缓存图层，以点数为宽，缓存数为高，的原始尺寸语图 ，最新数据在上方 */
@@ -30,11 +45,33 @@ export class PlaneLayer implements ISpectrogram {
   private timeCanvas: HTMLCanvasElement
   private timeCtx: CanvasRenderingContext2D
 
+  /** 滚动条图层 */
+  private canvasScorll: HTMLCanvasElement
+  private ctxScorll: CanvasRenderingContext2D
+
+  /** 滚动条绘制图层 */
+  private canvasXscr: HTMLCanvasElement
+  private ctxXscr: CanvasRenderingContext2D
+
+  /** 滚动条绘制图层 */
+  private canvasMouse: HTMLCanvasElement
+  private ctxMouse: CanvasRenderingContext2D
+  private timeCacheCanvas: HTMLCanvasElement
+  private timeCacheCtx: CanvasRenderingContext2D
+  private remainder: number
+  private counterNumber: number
   constructor(options: SpectrogramOptions, attr: SpectrogramAttr) {
     /** 从父层共享属性 */
     this.dom = options.El
     this.options = options
     this.attr = attr
+    /* 设置余数 */
+    this.remainder = 0
+    /** 初始化网格绘制数组 */
+    this.gridCache = {
+      x: [],
+      y: [],
+    }
     /** 创建绘制图层 */
     this.chartCanvas = makeCanvas(
       500,
@@ -52,26 +89,221 @@ export class PlaneLayer implements ISpectrogram {
     /** 创建网格图层 */
     this.gridCanvas = makeCanvas(510, this.dom.clientHeight, this.dom.clientWidth)
     this.gridCtx = this.gridCanvas.getContext('2d')
+    this.gridCtx.strokeStyle = options.color.axis
+    this.gridCtx.fillStyle = options.color.label
     this.clear(this.gridCtx)
     this.dom.appendChild(this.gridCanvas)
 
     /** 创建时间图层 */
-    this.timeCanvas = makeCanvas(520, this.dom.clientHeight, this.dom.clientWidth)
+    this.timeCanvas = makeCanvas(510, this.dom.clientHeight, this.dom.clientWidth)
     this.timeCtx = this.timeCanvas.getContext('2d')
+    this.timeCtx.strokeStyle = options.color.axis
+    this.timeCtx.fillStyle = options.color.label
+    this.counterNumber = 0
     this.clear(this.timeCtx)
     this.dom.appendChild(this.timeCanvas)
+    /** 创建时间图层的COPY 层 */
+    this.timeCacheCanvas = makeCanvas(0, this.dom.clientHeight, this.dom.clientWidth)
+    this.timeCacheCtx = this.timeCacheCanvas.getContext('2d')
+    this.timeCacheCtx.strokeStyle = options.color.axis
+    this.timeCacheCtx.fillStyle = options.color.label
+    this.clear(this.timeCacheCtx)
+    // this.timeCacheCanvas.style.left = '700px'
+    this.dom.appendChild(this.timeCacheCanvas)
+
+    this.timeCacheCanvas = makeCanvas(0, this.dom.clientHeight, this.dom.clientWidth)
+    this.timeCacheCtx = this.timeCacheCanvas.getContext('2d')
+    this.timeCacheCtx.strokeStyle = options.color.axis
+    this.timeCacheCtx.fillStyle = options.color.label
+    this.clear(this.timeCacheCtx)
+    // this.timeCacheCanvas.style.left = '700px'
+    this.dom.appendChild(this.timeCacheCanvas)
+
+    /** 创建Scorll图层 */
+    this.canvasScorll = makeCanvas(530, this.dom.clientHeight, this.dom.clientWidth)
+    this.dom.appendChild(this.canvasScorll)
+    this.ctxScorll = this.canvasScorll.getContext('2d')
+
+    /** 创建Scorll绘制图层 */
+    this.canvasXscr = makeCanvas(531, this.dom.clientHeight, this.dom.clientWidth)
+    this.dom.appendChild(this.canvasXscr)
+    this.ctxXscr = this.canvasXscr.getContext('2d')
 
     this.cacheImage = this.chartCtx.createImageData(this.options.fftLen, 1)
     /** 注册事件 */
     this.regevent()
   }
   private regevent(): void {
-    this.chartCanvas.addEventListener('mousemove', (e: MouseEvent) => {
+    let beforeP = {
+      x: 0,
+      y: 0,
+      gridx: 0,
+      gridy: 0,
+    }
+    let MoseType = MouseEnum.None
+    this.dom.addEventListener('mousemove', (e: MouseEvent) => {
+      e.preventDefault()
       const v = this.translateToWorld(e.offsetX, e.offsetY)
-      console.log(v)
-      console.log(this.translateToScreen(v.freq, v.time))
+      // this.drawText(v.freq, v.level, v.time)
+      // console.log(this.translateToScreen(v.freq, v.time))
+      if (e.buttons > 0) {
+        switch (MoseType) {
+          case MouseEnum.ScrollX:
+            this.moveGridX(e.movementX)
+            break
+          case MouseEnum.ScrollY:
+            this.moveGridY(e.movementY)
+            break
+          case MouseEnum.ScrollBar:
+            this.getScrollnPosition(e.offsetX, e.movementX)
+            break
+          // case MouseEnum.SelectRange:
+          //   //TODO
+          //   this.gridLayer.drawMarks(beforeP.gridx, beforeP.gridy, p.gridx, p.gridy)
+          //   break
+          case MouseEnum.None:
+          default:
+          //DO nothing
+        }
+      }
+    })
+
+    /* 注册鼠标按下事件 */
+    this.dom.addEventListener('mousedown', (event: Event) => {
+      event.preventDefault()
+      const e = event as MouseEvent
+      //获取当前鼠标数据位置
+
+      if (this.isInAxisX(e.offsetX, e.offsetY)) {
+        MoseType = MouseEnum.ScrollX
+      } else if (this.isInAxisY(e.offsetX, e.offsetY)) {
+        MoseType = MouseEnum.ScrollY
+      } else if (this.isInPosBar(e.offsetX, e.offsetY)) {
+        MoseType = MouseEnum.ScrollBar
+      } else if (this.isInCenter(e.offsetX, e.offsetY)) {
+        MoseType = MouseEnum.SelectRange
+        beforeP = {
+          x: Math.round(this.translateToWorld(e.offsetX, e.offsetY).freq),
+          y: Math.round(this.translateToWorld(e.offsetX, e.offsetY).level),
+          gridx: e.offsetX,
+          gridy: e.offsetY,
+        }
+      }
+    })
+
+    this.dom.addEventListener('mouseup', (event: Event) => {
+      event.preventDefault()
+      const e = event as MouseEvent
+      switch (MoseType) {
+        case MouseEnum.SelectRange:
+          if (this.isInCenter(e.offsetX, e.offsetY)) {
+            //获取当前鼠标数据位置
+            const p = {
+              x: Math.round(this.translateToWorld(e.offsetX, e.offsetY).freq),
+              y: Math.round(this.translateToWorld(e.offsetX, e.offsetY).level),
+              gridx: e.offsetX,
+              gridy: e.offsetY,
+            }
+            // this.gridLayer.drawMarks(beforeP.gridx, beforeP.gridy, p.gridx, p.gridy)
+            if (p.x < beforeP.x) {
+              this.setViewFreqRange(this.attr.startFreq, this.attr.endFreq)
+            } else {
+              this.setViewFreqRange(beforeP.x, p.x)
+            }
+          }
+          break
+        default:
+          break
+      }
+      MoseType = MouseEnum.None
+    })
+
+    // 注册鼠标滚轮缩放
+    this.dom.addEventListener('mousewheel', (event: Event) => {
+      event.preventDefault()
+      const e = event as WheelEvent // 强制类型为 滚动鼠标事件
+      //获取当前鼠标数据位置
+      const p = {
+        x: Math.round(this.translateToWorld(e.offsetX, e.offsetY).freq),
+        y: Math.round(this.translateToWorld(e.offsetX, e.offsetY).level),
+      }
+      // 判断当前鼠标滚轮促发的位置，如果是在y轴左边，则触发纵轴缩放，如果在y轴右边，则触发横轴缩放
+      if (this.isInAxisX(e.offsetX, e.offsetY) || this.isInCenter(e.offsetX, e.offsetY)) {
+        const delta = e.deltaY > 0 ? 1.5 : 0.6
+        this.scaleW(p.x, delta)
+      }
+      // if (this.isInAxisY(e.offsetX, e.offsetY)) {
+      //   const delta = e.deltaY > 0 ? 1.2 : 0.8 // 获取滚轮量 100 或-100
+      //   this.scaleH(p.y, delta)
+      // } else if (this.isInAxisX(e.offsetX, e.offsetY) || this.isInCenter(e.offsetX, e.offsetY)) {
+      //   const delta = e.deltaY > 0 ? 1.5 : 0.6
+      //   this.scaleW(p.x, delta)
+      // }
     })
   }
+
+  /**
+   * 横向缩放图谱
+   * @param freq 鼠标聚焦频点
+   * @param delta 缩放比例
+   */
+  public scaleW(freq: number, delta: number) {
+    // const range = this.translateToScreen(freq, delta) //获取当前显示范围
+    const oldLen = this.attr.endFreqView - this.attr.startFreqView //计算当前显示数量
+    const newLen = Math.round(oldLen * delta)
+    const oldPst = (freq - this.attr.startFreqView) / oldLen
+    const newLeft = Math.round(freq - newLen * oldPst)
+    const newRight = newLeft + newLen
+    this.setViewFreqRange(
+      newLeft < this.attr.startFreq ? this.attr.startFreq : newLeft,
+      newRight > this.attr.endFreq ? this.attr.endFreq : newRight,
+    )
+  }
+
+  /**
+   *  TODO 加上4格边界
+   * @param offsetX
+   * @param offsetY
+   * @returns
+   */
+  /* 判断是否处于中心 */
+  private isInCenter(offsetX: number, offsetY: number): boolean {
+    return (
+      offsetX > this.options.VERTICAL_AXIS_MARGIN &&
+      offsetY < this.dom.clientHeight - this.options.HORIZONTAL_AXIS_MARGIN &&
+      offsetX < this.dom.clientWidth &&
+      offsetY > 0
+    )
+  }
+  /* 判断促发最下方的滚动条 */
+  private isInPosBar(offsetX: number, offsetY: number): boolean {
+    return (
+      offsetY > this.dom.clientHeight - 15 &&
+      offsetY < this.dom.clientHeight &&
+      offsetX > 0 &&
+      offsetX < this.dom.clientWidth
+    )
+  }
+  /* 判断是否促发x轴 */
+  private isInAxisX(offsetX: number, offsetY: number): boolean {
+    return (
+      offsetY > this.dom.clientHeight - this.options.VERTICAL_AXIS_MARGIN &&
+      offsetY < this.dom.clientHeight - 15 &&
+      offsetX > this.options.HORIZONTAL_AXIS_MARGIN &&
+      offsetX < this.dom.clientWidth
+    )
+  }
+
+  /* 判断是否促发y轴 */
+  private isInAxisY(offsetX: number, offsetY: number): boolean {
+    return (
+      offsetX < this.options.HORIZONTAL_AXIS_MARGIN &&
+      offsetY < this.dom.clientHeight - this.options.VERTICAL_AXIS_MARGIN &&
+      offsetX > 0 &&
+      offsetY > 0
+    )
+  }
+
   /**
    * 增加数据行
    * @param fd 语图帧数据
@@ -80,10 +312,153 @@ export class PlaneLayer implements ISpectrogram {
     // 图形处理
     this.appendLine(fd)
     this.drawToChart()
-    // 网格处理
-    // TODO
-    const timeFD = this.attr.recentCache.see(375)
-    new Date(timeFD.time).toTimeString()
+    this.drawTimeGrid(fd)
+  }
+
+  private drawTimeGrid(fd: FrameData) {
+    /* 获取每移动多少画一个时间 */
+    const move = (this.dom.clientHeight - this.options.VERTICAL_AXIS_MARGIN) / this.options.cacheCount
+    const now = move + this.remainder
+    const stagNumber = Math.floor(now)
+    this.remainder = now - stagNumber
+    const oneBoxHeight = 100
+    const oneBoxNumber = this.dom.clientHeight / oneBoxHeight
+    /* 每格多少条数据 */
+    const count = this.options.cacheCount / Math.floor(oneBoxNumber)
+    this.clear(this.timeCacheCtx)
+    this.timeCacheCtx.drawImage(
+      this.timeCanvas,
+      0,
+      0,
+      this.dom.clientWidth,
+      this.dom.clientHeight - stagNumber - this.options.VERTICAL_AXIS_MARGIN,
+      0,
+      stagNumber,
+      this.dom.clientWidth,
+      this.dom.clientHeight - stagNumber - this.options.VERTICAL_AXIS_MARGIN,
+    )
+    /* 计数器小于我们计算出的那个间隔数  */
+    if (this.counterNumber % count == 0) {
+      this.counterNumber = 0
+      const yPotion = 0
+      this.timeCacheCtx.beginPath()
+      this.timeCacheCtx.moveTo(this.options.HORIZONTAL_AXIS_MARGIN, yPotion)
+      this.timeCacheCtx.lineTo(15 + this.options.HORIZONTAL_AXIS_MARGIN, yPotion)
+      this.timeCacheCtx.fillText(this.convertTime(fd.time), this.options.HORIZONTAL_AXIS_MARGIN, yPotion + 12)
+      this.timeCacheCtx.stroke()
+      this.timeCacheCtx.fill()
+    }
+    this.counterNumber++
+    this.clear(this.timeCtx)
+    this.timeCtx.drawImage(this.timeCacheCanvas, 0, 0)
+  }
+  private convertTime(date: number) {
+    const time = new Date(date).toTimeString()
+    const index = time.indexOf(' ')
+    const result = time.substring(0, index)
+    return result
+  }
+  /** 重绘坐标轴 */
+  private reDrawAxis() {
+    this.clear(this.gridCtx)
+    /** 绘制x轴 */
+    this.gridCtx.beginPath()
+    this.gridCtx.moveTo(this.options.HORIZONTAL_AXIS_MARGIN, this.dom.clientHeight - this.options.VERTICAL_AXIS_MARGIN)
+    this.gridCtx.lineTo(this.dom.clientWidth, this.dom.clientHeight - this.options.VERTICAL_AXIS_MARGIN)
+    this.gridCtx.fill()
+    this.gridCtx.stroke()
+  }
+  /**
+   * 绘制x轴形状
+   * @param startXNumber 横向初始点值
+   * @param endXNumber 横向终点值
+   */
+  private drawXGrid(startNumber: number, endNumber: number) {
+    /* 每个格子约为100px宽 */
+    const oneBoxPx = 100
+
+    const lableTextWidth = 50
+    /* 可视区域的数值 */
+    const differFrequency = endNumber - startNumber
+    const viewRect = {
+      width: this.dom.clientWidth - this.options.HORIZONTAL_AXIS_MARGIN,
+      height: this.dom.clientHeight - this.options.VERTICAL_AXIS_MARGIN,
+    }
+    /* 计算数据密度, 1px = 多少hz */
+    const pxKhz = differFrequency / viewRect.width
+    /* 可视区域的预计格子数 */
+    const gridNumber = viewRect.width / oneBoxPx
+    /* 每格对应的频率 */
+    const oneGridFrequency = differFrequency / gridNumber
+    /* 对取得的频率取整 */
+    const integerGridFrequency = oneGridFrequency.toString().split('.')[0]
+    /* 对取得的频率取余 */
+    const remainderGridFrequency = parseInt(integerGridFrequency) / Math.pow(10, integerGridFrequency.length - 1)
+    /* 获取每格之间的间隔量 */
+    const gridInterval = (Math.round(remainderGridFrequency * 2) / 2) * Math.pow(10, integerGridFrequency.length - 1)
+    /* 计算第一个刻度的数值 */
+    const fistNumber = Math.trunc(startNumber / Number(gridInterval)) * Number(gridInterval) + Number(gridInterval)
+    /* 计算第一个刻度所在的位置对应的px值 */
+    const oneAxisPx = (fistNumber - startNumber) / pxKhz
+    /* 设置计数器，计算当前为第几格 */
+    /* 设置每格起点的px值 */
+    let offset = fistNumber
+    const numberXArr: Array<number> = [fistNumber]
+    while (offset + gridInterval < endNumber) {
+      offset += gridInterval
+      numberXArr.push(offset)
+    }
+    const xArr: { scaleX: number; scaleText: number }[] = numberXArr.map((item, index) => {
+      return {
+        scaleX: this.options.HORIZONTAL_AXIS_MARGIN + oneAxisPx + (gridInterval / pxKhz) * index,
+        scaleText: item,
+      }
+    })
+    /* 初始化x轴 */
+    this.gridCache.x = []
+    xArr.forEach((item) => {
+      this.gridCtx.beginPath()
+      this.gridCtx.moveTo(item.scaleX, this.dom.clientHeight - this.options.VERTICAL_AXIS_MARGIN)
+      this.gridCtx.lineTo(item.scaleX, this.dom.clientHeight - this.options.VERTICAL_AXIS_MARGIN - shortLen)
+      this.gridCtx.fillText(
+        `${toDisplayFreq(item.scaleText)}`,
+        item.scaleX - lableTextWidth / 2,
+        this.dom.clientHeight - shortLen * 2,
+      )
+      this.gridCtx.fill()
+      this.gridCache.x.push(item.scaleX)
+    })
+  }
+
+  /** 绘制x轴方向滚动条
+   * @param startNumber 当前视图的起点值
+   * @param endNumber 当前视图的终点值
+   */
+  private drawScroll(startNumber: number, endNumber: number) {
+    // 当前滚动条的起始位置
+    const scrollBoxLeft =
+      ((startNumber - this.attr.startFreq) / (this.attr.endFreq - this.attr.startFreq)) * this.dom.clientWidth
+    // 当前滚动条的起始位置
+    const scrollBoxRight =
+      ((endNumber - this.attr.startFreq) / (this.attr.endFreq - this.attr.startFreq)) * this.dom.clientWidth
+    /* 绘制滚动条显示总长 */
+    this.ctxScorll.beginPath()
+    this.ctxScorll.moveTo(0, this.dom.clientHeight - shortLen)
+    this.ctxScorll.lineTo(this.dom.clientWidth, this.dom.clientHeight - shortLen)
+    this.ctxScorll.lineTo(this.dom.clientWidth, this.dom.clientHeight)
+    this.ctxScorll.lineTo(0, this.dom.clientHeight)
+    this.ctxScorll.lineTo(0, this.dom.clientHeight - shortLen)
+    this.ctxScorll.stroke()
+    this.ctxScorll.fill()
+    /* 绘制当前视图的滚动条占全部滚动条的比例 */
+    this.ctxXscr.beginPath()
+    this.ctxXscr.moveTo(scrollBoxLeft, this.dom.clientHeight - shortLen)
+    this.ctxXscr.lineTo(scrollBoxRight, this.dom.clientHeight - shortLen)
+    this.ctxXscr.lineTo(scrollBoxRight, this.dom.clientHeight)
+    this.ctxXscr.lineTo(scrollBoxLeft, this.dom.clientHeight)
+    this.ctxXscr.lineTo(scrollBoxLeft, this.dom.clientHeight - shortLen)
+    this.ctxXscr.fillStyle = '#3CA9C4'
+    this.ctxXscr.fill()
   }
 
   /**
@@ -108,11 +483,60 @@ export class PlaneLayer implements ISpectrogram {
     // console.log(freq, indexFreq, indexTime, this.attr.recentCache.see(indexTime).data[indexFreq])
     return {
       freq: Math.round(freq),
-      level: this.attr.recentCache.see(indexTime).data[indexFreq],
-      time: this.attr.recentCache.see(indexTime).time,
+      level: this.attr.recentCache.see(indexTime)?.data[indexFreq],
+      time: this.attr.recentCache.see(indexTime)?.time,
     }
   }
 
+  public drawText(freq: number, level: number, time: number) {
+    this.clear(this.ctxMouse)
+    this.ctxMouse.beginPath()
+    this.ctxMouse.moveTo(this.dom.clientWidth - 100, 0)
+    this.ctxMouse.lineTo(this.dom.clientWidth, 0)
+    this.ctxMouse.lineTo(this.dom.clientWidth, 100)
+    this.ctxMouse.lineTo(this.dom.clientWidth - 100, 100)
+    this.ctxMouse.fillText(
+      `
+       频率：${toDisplayFreq(freq)}
+       电平：${level}dBm
+       时间：${time}
+    `,
+      this.dom.clientWidth - 80,
+      10,
+    )
+    this.ctxMouse.fill()
+  }
+
+  /**
+   * 拖拽横坐标轴移动图谱
+   * @param movementX 鼠标聚焦频点
+   */
+  public moveGridX(movementX: number) {
+    const pxKhz = (this.attr.endFreqView - this.attr.startFreqView) / this.dom.clientWidth
+    const rangData = movementX * pxKhz
+    this.setViewFreqRange(this.attr.startFreqView - rangData, this.attr.endFreqView - rangData)
+  }
+  /**
+   * 拖拽横轴上的移动图谱
+   * @param eOffsetX 鼠标所在的位置
+   * @param eOffsetY 鼠标Y轴所在的位置
+   * @param movementX 鼠标移动了多少量
+   */
+  public getScrollnPosition(eOffsetX: number, movementX: number) {
+    const pxKhz = (this.attr.endFreq - this.attr.startFreq) / this.dom.clientWidth
+    const rangData = movementX * pxKhz
+    this.setViewFreqRange(this.attr.startFreqView + rangData, this.attr.endFreqView + rangData)
+  }
+
+  /**
+   * 拖拽纵坐标轴移动图谱
+   * @param movementY 鼠标聚焦频点
+   */
+  public moveGridY(movementY: number) {
+    const pxKhz = (this.attr.highLevel - this.attr.lowLevel) / this.dom.clientHeight
+    const rangData = movementY * pxKhz
+    this.setViewLevelRange(this.attr.lowLevel + rangData, this.attr.highLevel + rangData)
+  }
   /**
    * 通过频率、时间获取到对应屏幕的坐标系位置
    * @param freq 频率
@@ -211,12 +635,20 @@ export class PlaneLayer implements ISpectrogram {
    * @param endFreq 终止频率
    */
   public setFreqRange(startFreq: number, endFreq: number) {
-    //TODO 重绘标尺3
-    this.drawToChart()
+    this.setViewFreqRange(startFreq, endFreq)
   }
   public setViewFreqRange(startFreq: number, endFreq: number) {
+    if (startFreq < this.attr.startFreq || endFreq > this.attr.endFreq || endFreq <= startFreq) {
+      throw new Error('设置起止频率范围错误')
+    }
     //TODO 重绘标尺
     this.drawToChart()
+    this.reDrawAxis()
+    this.attr.startFreqView = startFreq
+    this.attr.endFreqView = endFreq
+    this.clear(this.ctxXscr, this.ctxScorll)
+    this.drawXGrid(startFreq, endFreq)
+    this.drawScroll(startFreq, endFreq)
   }
   /**
    * 设置当前图谱展示的电平值范围

@@ -88,6 +88,9 @@ export class ThreeLayer implements ISpectrogram {
     this.mesh.scale.x = this.compression / 10
     this.scene.add(this.mesh)
   }
+  translateToWorld(x: number, y: number): { freq: number; level: number; time: number } {
+    throw new Error('Method not implemented.')
+  }
   /** 更新图谱 */
   public update(fd: FrameData): void {
     this.gromMove()

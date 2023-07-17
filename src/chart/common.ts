@@ -19,7 +19,7 @@ export function toDisplayFreq(freq: number): string {
     return `${freq / MHz}MHz`
   }
   if (freq >= KHz) {
-    return `${freq / KHz}KHz`
+    return `${freq / KHz}kHz`
   }
   return `${freq}Hz`
 }

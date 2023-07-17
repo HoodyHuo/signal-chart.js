@@ -17,6 +17,7 @@ export abstract class Gram {
     height:${options.El.clientHeight - options.VERTICAL_AXIS_MARGIN}px;
     width: ${options.El.clientWidth - options.HORIZONTAL_AXIS_MARGIN}px;
     position: absolute;
+    z-index: 535;
     top: 0px;
     left: ${options.HORIZONTAL_AXIS_MARGIN}px;
     `

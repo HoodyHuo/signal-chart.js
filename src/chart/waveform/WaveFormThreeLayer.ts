@@ -25,13 +25,11 @@ class WaveFormThreeLayer {
   private renderer: WebGLRenderer
   private scene: Scene
   private camera: OrthographicCamera
-
   private line: Line
   private geometry: BufferGeometry
   /**投影射线工具 */
   private raycaster: Raycaster = new Raycaster()
   private plane: Plane = new Plane(new Vector3(0, 0, 1))
-
   constructor(options: WaveFormOptions, attr: WaveFormAttr) {
     this.options = options
     this.attr = attr
@@ -44,7 +42,6 @@ class WaveFormThreeLayer {
     const axesHelper = new AxesHelper(10000)
     axesHelper.position.set(0, 0, 0)
     this.scene.add(axesHelper)
-
     // 创建线条
     //构建线几何体（缓冲型）
     this.drawData = new Float32Array(this.options.cache * 3)

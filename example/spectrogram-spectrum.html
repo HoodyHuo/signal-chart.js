@@ -43,7 +43,7 @@
     <script type="module">
 
         import { Spectrum, Spectrogram, ConnectorGroup } from '../lib/signal-chart.js'
-        const MAX_POINTS = 10 * 10000 //500帧缓存  200000：15、  150000：20 、 100000：30 、50000：60
+        const MAX_POINTS = 4800//500帧缓存  200000：15、  150000：20 、 100000：30 、50000：60
         const cacheCount = 500
         const gram = new Spectrum({
             keepMode: 0, // 保持模式 0 刷新 1 最大 2 最小 3 平均
@@ -57,7 +57,7 @@
                 line: "#000000",
             }
         })
-        gram.setMarkerLine({ name: 'b', level: -25,})
+        gram.setMarkerLine({ name: 'b213', level: -25,})
         setTimeout(() => {
             gram.setMarkerLine({ name: 'b', level: -30, color: '#00ff00'  })
         }, 3000)
@@ -79,10 +79,9 @@
             type: 0,
             fftLen: MAX_POINTS
         })
-
         document.getElementById('cont')
             .addEventListener('mousemove', (event) => {
-                console.log(gram.getMarkerValue(event.offsetX, event.offsetY))
+                // console.log(gram.getMarkerValue(event.offsetX, event.offsetY))
                 if (event.altKey) {
                     const c = gram.getProject()
                 }
@@ -107,7 +106,7 @@
             const s = document.getElementById("startFreq").value
             const e = document.getElementById("endFreq").value
             gram.setViewFreqRange(parseInt(s), parseInt(e))
-            // gram2.setViewFreqRange(parseInt(s),parseInt(e))
+            gram2.setViewFreqRange(parseInt(s),parseInt(e))
 
         }
 

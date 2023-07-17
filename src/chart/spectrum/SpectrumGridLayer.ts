@@ -27,6 +27,7 @@ export class SpectrogramGridLayer {
   canvasScorll: HTMLCanvasElement
   canvasAxisX: HTMLCanvasElement
   canvasAxisY: HTMLCanvasElement
+  canvasFocus: HTMLCanvasElement
   /** 挂载元素 */
   private parentDom: HTMLElement
   /** 绘制山下文 */
@@ -35,6 +36,7 @@ export class SpectrogramGridLayer {
   private ctxScorll: CanvasRenderingContext2D
   private ctxAxisX: CanvasRenderingContext2D
   private ctxAxisY: CanvasRenderingContext2D
+  private ctxFocus: CanvasRenderingContext2D
   /** 记录初始最小频率 */
   private minFreq: number
   /** 记录初始最大频率 */
@@ -70,14 +72,14 @@ export class SpectrogramGridLayer {
     this.ctxGrid = this.canvasAxis.getContext('2d')
     this.ctxGrid.strokeStyle = options.color.grid
     /** 创建X轴图层 */
-    this.canvasAxisX = this.makeCanvas(501)
+    this.canvasAxisX = this.makeCanvas(510)
     this.parentDom.appendChild(this.canvasAxisX)
     this.ctxAxisX = this.canvasAxisX.getContext('2d')
     this.ctxAxisX.strokeStyle = options.color.axis
     this.ctxAxisX.fillStyle = options.color.label
     this.ctxAxisX.lineWidth = 2
     /** 创建Y轴图层 */
-    this.canvasAxisY = this.makeCanvas(502)
+    this.canvasAxisY = this.makeCanvas(510)
     this.parentDom.appendChild(this.canvasAxisY)
     this.ctxAxisY = this.canvasAxisY.getContext('2d')
     this.ctxAxisY.strokeStyle = options.color.axis
@@ -91,9 +93,16 @@ export class SpectrogramGridLayer {
     this.canvasScorll = this.makeCanvas(530)
     this.parentDom.appendChild(this.canvasScorll)
     this.ctxScorll = this.canvasScorll.getContext('2d')
+    /** 创建鼠标绘线图层 */
+    this.canvasFocus = this.makeCanvas(531)
+    this.parentDom.appendChild(this.canvasFocus)
+    this.ctxFocus = this.canvasFocus.getContext('2d')
+    this.ctxFocus.strokeStyle = 'blue'
+    this.ctxFocus.fillStyle = '#ffffff'
+    this.ctxFocus.lineWidth = 1
     //TODO  设置颜色
     /**清空图层内容 */
-    this.clear(this.ctxGrid, this.ctxAxisX, this.ctxAxisY, this.ctxMarker, this.ctxScorll)
+    this.clear(this.ctxGrid, this.ctxAxisX, this.ctxAxisY, this.ctxMarker, this.ctxScorll, this.ctxFocus)
     // 标尺原点，以此为起点
     this.AXIS_ORIGIN = {
       x: options.HORIZONTAL_AXIS_MARGIN,
@@ -258,23 +267,16 @@ export class SpectrogramGridLayer {
     let count = 0
     /* 设置每格起点的px值 */
     let offset = fistNumber
-    const numberXArr: Array<number> = [startNumber, fistNumber]
+    const numberXArr: Array<number> = [fistNumber]
     while (offset + gridInterval < endNumber) {
       offset += gridInterval
       numberXArr.push(offset)
       count++
     }
     const xArr: { scaleX: number; scaleText: number }[] = numberXArr.map((item, index) => {
-      if (index == 0) {
-        return {
-          scaleX: this.AXIS_ORIGIN.x,
-          scaleText: item,
-        }
-      } else {
-        return {
-          scaleX: this.AXIS_ORIGIN.x + oneAxisPx + (gridInterval / pxKhz) * (index - 1),
-          scaleText: item,
-        }
+      return {
+        scaleX: this.AXIS_ORIGIN.x + oneAxisPx + (gridInterval / pxKhz) * index,
+        scaleText: item,
       }
     })
     /* 初始化x轴 */
@@ -400,12 +402,38 @@ export class SpectrogramGridLayer {
   public drawMarks(startX: number, startY: number, endX: number, endY: number) {
     this.clear(this.ctxScorll)
     this.ctxScorll.beginPath()
-    this.ctxScorll.moveTo(startX, startY)
-    this.ctxScorll.lineTo(startX, endY)
-    this.ctxScorll.lineTo(endX, endY)
-    this.ctxScorll.lineTo(endX, startY)
+    this.ctxScorll.moveTo(startX + this.AXIS_ORIGIN.x, startY)
+    this.ctxScorll.lineTo(startX + this.AXIS_ORIGIN.x, endY)
+    this.ctxScorll.lineTo(endX + this.AXIS_ORIGIN.x, endY)
+    this.ctxScorll.lineTo(endX + this.AXIS_ORIGIN.x, startY)
     this.ctxScorll.fill()
     this.ctxScorll.stroke()
+  }
+
+  public drawMouseCenter(offsetX: number, offsetY: number, freq: number, level: number) {
+    this.clear(this.ctxFocus)
+    /* 判断鼠标是否移动到边界，到边界则清除图层 */
+    if (
+      offsetX <= this.AXIS_ORIGIN.x ||
+      offsetX >= this.parentDom.offsetWidth - this.AXIS_ORIGIN.x - 2 ||
+      offsetY == 0 ||
+      offsetY >= this.parentDom.offsetHeight - this.AXIS_ORIGIN.y
+    ) {
+      return
+    }
+    const nowFreq = Math.round(freq)
+    this.ctxFocus.beginPath()
+    this.ctxFocus.moveTo(this.AXIS_ORIGIN.x, offsetY)
+    this.ctxFocus.lineTo(this.parentDom.offsetWidth, offsetY)
+    this.ctxFocus.moveTo(offsetX + this.AXIS_ORIGIN.x, 0)
+    this.ctxFocus.lineTo(offsetX + this.AXIS_ORIGIN.x, this.parentDom.offsetHeight - this.AXIS_ORIGIN.y)
+    this.ctxFocus.fillText(
+      `(${toDisplayFreq(nowFreq)}, ${level.toFixed(2)} dBm)`,
+      offsetX + this.AXIS_ORIGIN.x + 10,
+      offsetY + 10,
+    )
+    this.ctxFocus.fill()
+    this.ctxFocus.stroke()
   }
 
   // /** 绘制Y轴方向滚动条
