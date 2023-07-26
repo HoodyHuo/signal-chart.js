@@ -51,6 +51,7 @@ class WaveForm {
    * 绑定交互事件
    */
   private registEvent(): void {
+    let MoseType = MouseEnum.None
     // console.error(new Error('Method not implemented.'))
     // 注册鼠标滚轮缩放
     this.options.El.addEventListener('mousewheel', (event: Event) => {
@@ -61,10 +62,15 @@ class WaveForm {
         x: Math.round(this.getMarkerValue(e.offsetX, e.offsetY).x),
         y: Math.round(this.getMarkerValue(e.offsetX, e.offsetY).y),
       }
-      const delta = e.deltaY > 0 ? 1.5 : 0.6 // 获取滚轮量 100 或-100
-      this.scaleW(p.x, delta)
+      if (this.isInCenter(e.offsetX, e.offsetY)) {
+        const delta = e.deltaY > 0 ? 1.5 : 0.6 // 获取滚轮量 100 或-100
+        this.scaleH(p.y, delta)
+      }
+      if (this.isInPosBar(e.offsetX, e.offsetY)) {
+        const delta = e.deltaY > 0 ? 1.5 : 0.6 // 获取滚轮量 100 或-100
+        this.scaleW(p.x, delta)
+      }
     })
-    let MoseType = MouseEnum.None
     this.options.El.addEventListener('mousemove', (event: Event) => {
       event.preventDefault()
       const e = event as MouseEvent // 强制类型为 滚动鼠标事件
@@ -75,7 +81,6 @@ class WaveForm {
         gridy: e.offsetY,
       }
       if (e.buttons > 0) {
-        console.log(MoseType)
         switch (MoseType) {
           case MouseEnum.ScrollBar:
             this.getScrollnPosition(e.offsetX, e.movementX)
@@ -107,6 +112,18 @@ class WaveForm {
       offsetY < this.options.El.clientHeight &&
       offsetX > 0 &&
       offsetX < this.options.El.clientWidth
+    )
+  }
+  /**
+   *  TODO 加上4格边界
+   * @param offsetX
+   * @param offsetY
+   * @returns
+   */
+  /* 判断是否处于中心 */
+  private isInCenter(offsetX: number, offsetY: number): boolean {
+    return (
+      offsetX > 0 && offsetY < this.options.El.clientHeight - 15 && offsetX < this.options.El.clientWidth && offsetY > 0
     )
   }
   /**
@@ -156,6 +173,21 @@ class WaveForm {
     const newLeft = Math.round(freq - newLen * oldPst)
     const newRight = newLeft + newLen
     this.setViewStartEnd(newLeft, newRight)
+  }
+
+  /**
+   * 纵向缩放图谱
+   * @param freq 鼠标聚焦频点
+   * @param delta 缩放比例
+   */
+  public scaleH(freq: number, delta: number) {
+    const range = this.threeLayer.getBorderValue() //获取当前显示范围
+    const oldLen = range.bottom - range.top //计算当前显示数量
+    const newLen = Math.round(oldLen * delta) // 根据缩放比例计算需要显示的新的范围
+    const oldPst = (freq - range.top) / oldLen
+    const newTop = Math.round(freq - newLen * oldPst)
+    const newBottom = newTop + newLen
+    this.setViewRange(newBottom, newTop)
   }
   /**
    * 绘制波形图
