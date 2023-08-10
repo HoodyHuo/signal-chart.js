@@ -67,11 +67,6 @@ export class Spectrum extends EventDispatcher implements FreqChangeable {
 
     this.threeLayer = new SpectrogramThreeLayer(fullOptions, this.attr)
     this.gridLayer = new SpectrogramGridLayer(fullOptions, this.attr)
-    // 标尺原点，以此为起点
-    this.AXIS_ORIGIN = {
-      x: fullOptions.HORIZONTAL_AXIS_MARGIN,
-      y: fullOptions.VERTICAL_AXIS_MARGIN,
-    }
 
     this.registeEvent()
   }
@@ -187,10 +182,10 @@ export class Spectrum extends EventDispatcher implements FreqChangeable {
     //填充 信号线条
     ctx.drawImage(
       this.threeLayer.renderer.domElement,
-      this.AXIS_ORIGIN.x,
+      this.options.HORIZONTAL_AXIS_MARGIN,
       0,
-      width - this.AXIS_ORIGIN.x,
-      height - this.AXIS_ORIGIN.y,
+      width - this.options.HORIZONTAL_AXIS_MARGIN,
+      height - this.options.VERTICAL_AXIS_MARGIN,
     )
     //填充 marker
     ctx.drawImage(this.gridLayer.canvasMarker, 0, 0)
@@ -227,8 +222,8 @@ export class Spectrum extends EventDispatcher implements FreqChangeable {
       const e = event as WheelEvent // 强制类型为 滚动鼠标事件
       //获取当前鼠标数据位置
       const p = {
-        x: Math.round(this.getMarkerValue(e.offsetX - this.AXIS_ORIGIN.x, e.offsetY).x),
-        y: Math.round(this.getMarkerValue(e.offsetX - this.AXIS_ORIGIN.x, e.offsetY).y),
+        x: Math.round(this.getMarkerValue(e.offsetX - this.options.HORIZONTAL_AXIS_MARGIN, e.offsetY).x),
+        y: Math.round(this.getMarkerValue(e.offsetX - this.options.HORIZONTAL_AXIS_MARGIN, e.offsetY).y),
       }
       // 判断当前鼠标滚轮促发的位置，如果是在y轴左边，则触发纵轴缩放，如果在y轴右边，则触发横轴缩放
       if (this.isInAxisY(e.offsetX, e.offsetY)) {
@@ -244,12 +239,12 @@ export class Spectrum extends EventDispatcher implements FreqChangeable {
       event.preventDefault()
       const e = event as MouseEvent // 强制类型为 滚动鼠标事件
       if (this.isInCenter(e.offsetX, e.offsetY)) {
-        this.mouseFocus(e.offsetX, e.offsetY)
+        this.mouseFocus(e.offsetX - this.options.HORIZONTAL_AXIS_MARGIN, e.offsetY)
       }
       if (e.buttons > 0) {
         const p = {
-          x: Math.round(this.getMarkerValue(e.offsetX - this.AXIS_ORIGIN.x, e.offsetY).x),
-          y: Math.round(this.getMarkerValue(e.offsetX - this.AXIS_ORIGIN.x, e.offsetY).y),
+          x: Math.round(this.getMarkerValue(e.offsetX - this.options.HORIZONTAL_AXIS_MARGIN, e.offsetY).x),
+          y: Math.round(this.getMarkerValue(e.offsetX - this.options.HORIZONTAL_AXIS_MARGIN, e.offsetY).y),
           gridx: e.offsetX,
           gridy: e.offsetY,
         }
@@ -287,8 +282,8 @@ export class Spectrum extends EventDispatcher implements FreqChangeable {
       } else if (this.isInCenter(e.offsetX, e.offsetY)) {
         MoseType = MouseEnum.SelectRange
         beforeP = {
-          x: Math.round(this.getMarkerValue(e.offsetX - this.AXIS_ORIGIN.x, e.offsetY).x),
-          y: Math.round(this.getMarkerValue(e.offsetX - this.AXIS_ORIGIN.x, e.offsetY).y),
+          x: Math.round(this.getMarkerValue(e.offsetX - this.options.HORIZONTAL_AXIS_MARGIN, e.offsetY).x),
+          y: Math.round(this.getMarkerValue(e.offsetX - this.options.HORIZONTAL_AXIS_MARGIN, e.offsetY).y),
           gridx: e.offsetX,
           gridy: e.offsetY,
         }
@@ -302,8 +297,8 @@ export class Spectrum extends EventDispatcher implements FreqChangeable {
           if (this.isInCenter(e.offsetX, e.offsetY)) {
             //获取当前鼠标数据位置
             const p = {
-              x: Math.round(this.getMarkerValue(e.offsetX - this.AXIS_ORIGIN.x, e.offsetY).x),
-              y: Math.round(this.getMarkerValue(e.offsetX - this.AXIS_ORIGIN.x, e.offsetY).y),
+              x: Math.round(this.getMarkerValue(e.offsetX - this.options.HORIZONTAL_AXIS_MARGIN, e.offsetY).x),
+              y: Math.round(this.getMarkerValue(e.offsetX - this.options.HORIZONTAL_AXIS_MARGIN, e.offsetY).y),
               gridx: e.offsetX,
               gridy: e.offsetY,
             }
@@ -329,10 +324,10 @@ export class Spectrum extends EventDispatcher implements FreqChangeable {
   /* 判断是否处于中心 */
   private isInCenter(offsetX: number, offsetY: number): boolean {
     return (
-      offsetX > this.AXIS_ORIGIN.x &&
-      offsetY < this.dom.clientHeight - this.AXIS_ORIGIN.y &&
-      offsetX < this.dom.clientWidth &&
-      offsetY > 0
+      offsetX >= this.options.HORIZONTAL_AXIS_MARGIN &&
+      offsetY <= this.dom.clientHeight - this.options.VERTICAL_AXIS_MARGIN &&
+      offsetX <= this.dom.clientWidth &&
+      offsetY >= 0
     )
   }
   /* 判断促发最下方的滚动条 */
@@ -347,15 +342,18 @@ export class Spectrum extends EventDispatcher implements FreqChangeable {
   /* 判断是否促发y轴 */
   private isInAxisY(offsetX: number, offsetY: number): boolean {
     return (
-      offsetX < this.AXIS_ORIGIN.x && offsetY < this.dom.clientHeight - this.AXIS_ORIGIN.y && offsetX > 0 && offsetY > 0
+      offsetX < this.options.HORIZONTAL_AXIS_MARGIN &&
+      offsetY < this.dom.clientHeight - this.options.VERTICAL_AXIS_MARGIN &&
+      offsetX > 0 &&
+      offsetY > 0
     )
   }
   /* 判断是否促发x轴 */
   private isInAxisX(offsetX: number, offsetY: number): boolean {
     return (
-      offsetY > this.dom.clientHeight - this.AXIS_ORIGIN.y &&
+      offsetY > this.dom.clientHeight - this.options.VERTICAL_AXIS_MARGIN &&
       offsetY < this.dom.clientHeight - 15 &&
-      offsetX > this.AXIS_ORIGIN.x &&
+      offsetX > this.options.HORIZONTAL_AXIS_MARGIN &&
       offsetX < this.dom.clientWidth
     )
   }

@@ -67,6 +67,8 @@ export interface Color {
   line?: string
   /** 鼠标焦点中心绘线图*/
   focusLine?: string
+
+  foculsFont?: string
 }
 
 /**
@@ -87,8 +89,8 @@ export function mergeDefaultOption(options: SpectrogramOptions): SpectrogramOpti
     El: document.body,
     Performance: false,
     fftLen: 4800,
-    HORIZONTAL_AXIS_MARGIN: 50,
-    VERTICAL_AXIS_MARGIN: 50,
+    HORIZONTAL_AXIS_MARGIN: 30,
+    VERTICAL_AXIS_MARGIN: 30,
     keepMode: KeepMode.CLEAN,
     cacheCount: 500,
     color: {
@@ -97,10 +99,15 @@ export function mergeDefaultOption(options: SpectrogramOptions): SpectrogramOpti
       axis: '#FFFFFF', // 轴色
       label: '#FFFFFF', // 轴标签色
       line: '#3ed630', // 折线色
-      focusLine: '#f50505', //鼠标焦点线图
+      focusLine: '#FFFFFF', //鼠标焦点线图
+      focusFont: '#FFFFFF',
     },
   }
+  const defaultColor = defaultOption.color
+  Object.assign(defaultColor, options.color)
+
   Object.assign(defaultOption, options)
+  defaultOption.color = defaultColor
   return defaultOption
 }
 

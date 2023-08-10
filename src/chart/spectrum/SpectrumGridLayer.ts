@@ -59,6 +59,7 @@ export class SpectrogramGridLayer {
 
   constructor(options: SpectrogramOptions, attr: SpectrumAttr) {
     this.parentDom = options.El
+    this.options = options
     this.attr = attr
     this.isOperatingMarker = false
     /** 初始化网格绘制数组 */
@@ -97,8 +98,6 @@ export class SpectrogramGridLayer {
     this.canvasFocus = this.makeCanvas(LayerIndex.ARROW_GRID)
     this.parentDom.appendChild(this.canvasFocus)
     this.ctxFocus = this.canvasFocus.getContext('2d')
-    this.ctxFocus.strokeStyle = 'blue'
-    this.ctxFocus.fillStyle = '#ffffff'
     this.ctxFocus.lineWidth = 1
     //TODO  设置颜色
     /**清空图层内容 */
@@ -138,8 +137,8 @@ export class SpectrogramGridLayer {
     this.startFreqView = startFreq
     this.endFreqView = endFreq
     this.drawScroll(startFreq, endFreq)
-    this.ctxGrid.fillStyle = '#18fa36'
-    this.ctxGrid.fillText(`${toDisplayFreq(startFreq)} - ${toDisplayFreq(startFreq)} `, 0, this.canvasAxis.height - 50)
+    this.ctxGrid.fillStyle = this.options.color.label
+    // this.ctxGrid.fillText(`${toDisplayFreq(startFreq)} - ${toDisplayFreq(startFreq)} `, 0, this.canvasAxis.height - 50)
     this.drawXGrid(startFreq, endFreq)
     this.reDrawAxis()
     this.reDrawMarkers()
@@ -158,8 +157,8 @@ export class SpectrogramGridLayer {
     this.clear(this.ctxAxisY)
     this.lowLevel = lowLevel
     this.highLevel = highLevel
-    this.ctxAxisY.fillStyle = '#18fa36'
-    this.ctxAxisY.fillText(`${Math.trunc(highLevel)}-${Math.trunc(lowLevel)}`, 0, 100)
+    // this.ctxAxisY.fillStyle = '#18fa36'
+    // this.ctxAxisY.fillText(`${Math.trunc(highLevel)}-${Math.trunc(lowLevel)}`, 0, 100)
     // this.drawYScroll(lowLevel, highLevel)
     this.drawYGrid(lowLevel, highLevel)
     this.reDrawAxis()
@@ -224,7 +223,7 @@ export class SpectrogramGridLayer {
     const levelPercent = (level - this.lowLevel) / (this.highLevel - this.lowLevel)
     const yPx = (this.canvasMarker.height - this.AXIS_ORIGIN.y) * (1 - levelPercent)
     this.ctxMarker.beginPath()
-    this.ctxMarker.fillStyle = '#FF696a'
+    this.ctxMarker.fillStyle = this.options.color.axis
     this.ctxMarker.moveTo(xPx, yPx)
     this.ctxMarker.lineTo(xPx - 5, yPx - 10)
     this.ctxMarker.lineTo(xPx + 5, yPx - 10)
@@ -287,7 +286,7 @@ export class SpectrogramGridLayer {
       this.ctxAxisX.lineTo(item.scaleX, this.parentDom.clientHeight - this.AXIS_ORIGIN.y - shortLen)
       this.ctxAxisX.fillText(
         `${toDisplayFreq(item.scaleText)}`,
-        item.scaleX - 20,
+        item.scaleX + 10,
         this.parentDom.clientHeight - shortLen * 2,
       )
       this.ctxAxisX.fill()
@@ -358,7 +357,7 @@ export class SpectrogramGridLayer {
       this.ctxAxisY.beginPath()
       this.ctxAxisY.moveTo(this.AXIS_ORIGIN.x, item.scaleY)
       this.ctxAxisY.lineTo(15 + this.AXIS_ORIGIN.x, item.scaleY)
-      this.ctxAxisY.fillText(`${Math.trunc(item.scaleText)}`, shortLen * 2 - 5, item.scaleY + 5)
+      this.ctxAxisY.fillText(`${Math.trunc(item.scaleText)}`, this.options.HORIZONTAL_AXIS_MARGIN - 25, item.scaleY + 5)
       this.ctxAxisY.stroke()
       this.ctxAxisY.fill()
       this.gridCache.y.push(item.scaleY)
@@ -389,7 +388,7 @@ export class SpectrogramGridLayer {
     this.ctxScorll.lineTo(scrollBoxRight, this.parentDom.clientHeight)
     this.ctxScorll.lineTo(scrollBoxLeft, this.parentDom.clientHeight)
     this.ctxScorll.lineTo(scrollBoxLeft, this.parentDom.clientHeight - shortLen)
-    this.ctxScorll.fillStyle = '#3CA9C4'
+    this.ctxScorll.fillStyle = this.options.color.focusLine
     this.ctxScorll.fill()
   }
 
@@ -423,48 +422,21 @@ export class SpectrogramGridLayer {
     }
     const nowFreq = Math.round(freq)
     this.ctxFocus.beginPath()
+    this.ctxFocus.fillStyle = this.options.color.focusLine
+    this.ctxFocus.strokeStyle = this.options.color.focusLine
     this.ctxFocus.moveTo(this.AXIS_ORIGIN.x, offsetY)
     this.ctxFocus.lineTo(this.parentDom.offsetWidth, offsetY)
     this.ctxFocus.moveTo(offsetX + this.AXIS_ORIGIN.x, 0)
     this.ctxFocus.lineTo(offsetX + this.AXIS_ORIGIN.x, this.parentDom.offsetHeight - this.AXIS_ORIGIN.y)
+    this.ctxFocus.font = '10px'
     this.ctxFocus.fillText(
       `(${toDisplayFreq(nowFreq)}, ${level.toFixed(2)} dBm)`,
-      offsetX + this.AXIS_ORIGIN.x + 10,
-      offsetY + 10,
+      offsetX + this.options.HORIZONTAL_AXIS_MARGIN + 14,
+      offsetY + 14,
     )
     this.ctxFocus.fill()
     this.ctxFocus.stroke()
   }
-
-  // /** 绘制Y轴方向滚动条
-  //  * @param startNumber 当前视图的起点值
-  //  * @param endNumber 当前视图的终点值
-  //  */
-  // private drawYScroll(startNumber: number, endNumber: number) {
-  //   console.log(startNumber, endNumber)
-  //   // 当前滚动条的起始位置
-  //   const scrollBoxtop = (endNumber / (this.maxLevel - this.minLevel)) * this.parentDom.clientHeight
-  //   // 当前滚动条的起始位置
-  //   const scrollBoxbottom = (startNumber / (this.maxLevel - this.minLevel)) * this.parentDom.clientHeight
-  //   /* 绘制滚动条显示总长 */
-  //   this.ctxAxisY.beginPath()
-  //   this.ctxAxisY.moveTo(0, 0)
-  //   this.ctxAxisY.lineTo(shortLen, 0)
-  //   this.ctxAxisY.lineTo(shortLen, this.parentDom.clientHeight)
-  //   this.ctxAxisY.lineTo(0, this.parentDom.clientHeight)
-  //   this.ctxAxisY.lineTo(0, 0)
-  //   this.ctxAxisY.stroke()
-  //   this.ctxAxisY.fill()
-  //   /* 绘制当前视图的滚动条占全部滚动条的比例 */
-  //   this.ctxMarker.beginPath()
-  //   this.ctxMarker.moveTo(0, scrollBoxtop)
-  //   this.ctxMarker.lineTo(shortLen, scrollBoxtop)
-  //   this.ctxMarker.lineTo(shortLen, scrollBoxbottom)
-  //   this.ctxMarker.lineTo(0, scrollBoxbottom)
-  //   this.ctxMarker.lineTo(0, scrollBoxtop)
-  //   this.ctxMarker.fillStyle = '#3CA9C4'
-  //   this.ctxMarker.fill()
-  // }
 
   private makeCanvas(zIndex: number): HTMLCanvasElement {
     const canvas = document.createElement('canvas')
