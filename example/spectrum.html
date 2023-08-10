@@ -38,7 +38,6 @@
     <img id ="aa" ></img>
 
     <div id="cont2" class="cont2"></div>
-    <div id="cont" class="cont" ></div>
 
     <script type="module" >
 
@@ -59,14 +58,7 @@
             fftLen:MAX_POINTS
         })
 
-        document.getElementById('cont')
-        .addEventListener('mousemove',(event)=>{
-            // console.log(gram.getMarkerValue(event.offsetX,event.offsetY))
-            if(event.altKey){
-                const c = gram.getProject()
-            }
-            
-        })
+       
         window.setMode = function(mode){
             gram.setKeepMode(mode)
         }
