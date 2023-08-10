@@ -1,5 +1,5 @@
 import { toDisplayFreq } from '../common'
-import { Marker, SpectrogramOptions, SpectrumAttr } from './SpectrumCommon'
+import { LayerIndex, Marker, SpectrogramOptions, SpectrumAttr } from './SpectrumCommon'
 
 const shortLen = 15
 
@@ -67,34 +67,34 @@ export class SpectrogramGridLayer {
       y: [],
     }
     /** 创建网格图层 */
-    this.canvasAxis = this.makeCanvas(500)
+    this.canvasAxis = this.makeCanvas(LayerIndex.BACKGROUND_GRID)
     this.parentDom.appendChild(this.canvasAxis)
     this.ctxGrid = this.canvasAxis.getContext('2d')
     this.ctxGrid.strokeStyle = options.color.grid
     /** 创建X轴图层 */
-    this.canvasAxisX = this.makeCanvas(510)
+    this.canvasAxisX = this.makeCanvas(LayerIndex.AXIS_LINE)
     this.parentDom.appendChild(this.canvasAxisX)
     this.ctxAxisX = this.canvasAxisX.getContext('2d')
     this.ctxAxisX.strokeStyle = options.color.axis
     this.ctxAxisX.fillStyle = options.color.label
     this.ctxAxisX.lineWidth = 2
     /** 创建Y轴图层 */
-    this.canvasAxisY = this.makeCanvas(510)
+    this.canvasAxisY = this.makeCanvas(LayerIndex.AXIS_LINE)
     this.parentDom.appendChild(this.canvasAxisY)
     this.ctxAxisY = this.canvasAxisY.getContext('2d')
     this.ctxAxisY.strokeStyle = options.color.axis
     this.ctxAxisY.fillStyle = options.color.label
     this.ctxAxisY.lineWidth = 2
     /** 创建Marker图层 */
-    this.canvasMarker = this.makeCanvas(522)
+    this.canvasMarker = this.makeCanvas(LayerIndex.MARKER)
     this.parentDom.appendChild(this.canvasMarker)
     this.ctxMarker = this.canvasMarker.getContext('2d')
     /** 创建Scorll图层 */
-    this.canvasScorll = this.makeCanvas(530)
+    this.canvasScorll = this.makeCanvas(LayerIndex.MARKER)
     this.parentDom.appendChild(this.canvasScorll)
     this.ctxScorll = this.canvasScorll.getContext('2d')
     /** 创建鼠标绘线图层 */
-    this.canvasFocus = this.makeCanvas(531)
+    this.canvasFocus = this.makeCanvas(LayerIndex.ARROW_GRID)
     this.parentDom.appendChild(this.canvasFocus)
     this.ctxFocus = this.canvasFocus.getContext('2d')
     this.ctxFocus.strokeStyle = 'blue'

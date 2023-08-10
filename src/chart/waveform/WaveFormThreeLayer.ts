@@ -39,9 +39,9 @@ class WaveFormThreeLayer {
     this.camera = this.initCamera(options.El)
 
     //创建辅助线
-    const axesHelper = new AxesHelper(10000)
-    axesHelper.position.set(0, 0, 0)
-    this.scene.add(axesHelper)
+    // const axesHelper = new AxesHelper(10000)
+    // axesHelper.position.set(0, 0, 0)
+    // this.scene.add(axesHelper)
     // 创建线条
     //构建线几何体（缓冲型）
     this.drawData = new Float32Array(this.options.cache * 3)

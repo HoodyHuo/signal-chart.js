@@ -114,3 +114,12 @@ export interface SpectrumAttr {
   /** 线型标记 */
   markerLines: Map<string, MarkerLine>
 }
+
+export const LayerIndex = {
+  BACKGROUND_GRID: 500,
+  AXIS_LINE: 520,
+  FFT_LINE: 530,
+  MARKER: 540,
+  ARROW_GRID: 550,
+  ARROW_LABEL: 560,
+}

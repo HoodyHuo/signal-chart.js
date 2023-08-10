@@ -1,6 +1,6 @@
 import Stats from '../../tool/stats/stats'
 import * as THREE from 'three'
-import { GramOptions } from './SpectrumCommon'
+import { GramOptions, LayerIndex } from './SpectrumCommon'
 export abstract class Gram {
   dom: HTMLElement
   renderer: THREE.WebGLRenderer
@@ -17,7 +17,7 @@ export abstract class Gram {
     height:${options.El.clientHeight - options.VERTICAL_AXIS_MARGIN}px;
     width: ${options.El.clientWidth - options.HORIZONTAL_AXIS_MARGIN}px;
     position: absolute;
-    z-index: 535;
+    z-index: ${LayerIndex.FFT_LINE};
     top: 0px;
     left: ${options.HORIZONTAL_AXIS_MARGIN}px;
     `

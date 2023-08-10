@@ -41,8 +41,8 @@ export class ThreeLayer implements ISpectrogram {
     //初始化THREE SCENE
     this.scene = new THREE.Scene()
     this.scene.background = new THREE.Color(this.options.color.background)
-    const axhelper = new THREE.AxesHelper(5000)
-    this.scene.add(axhelper)
+    // const axhelper = new THREE.AxesHelper(5000)
+    // this.scene.add(axhelper)
 
     //初始化 Camera  和 Control
     this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 10, 20000)

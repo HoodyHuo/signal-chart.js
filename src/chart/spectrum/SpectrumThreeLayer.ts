@@ -63,9 +63,9 @@ export class SpectrogramThreeLayer extends Gram {
     this.recentCache = new Queue<Float32Array>(options.cacheCount)
 
     /** --------------------------初始化频谱线图层-------------------------------- */
-    const a = new THREE.AxesHelper(10000)
-    a.position.set(0, 0, 0)
-    this.scene.add(a)
+    // const a = new THREE.AxesHelper(10000)
+    // a.position.set(0, 0, 0)
+    // this.scene.add(a)
     this.resizeData(options.fftLen)
     // new OrbitControls(this.camera, this.dom)
   }
