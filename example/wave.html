@@ -18,16 +18,7 @@
 
 <body>
   
-    <button onclick="setSuspend()" style="padding-top: 100px;">暂停</button>
-    <br/>
-    <input type="number" id="startFreq" value="0"/>
-    <input type="number" id="endFreq" value="50000"/>
-    <button onclick="setFreq()">设置起止点数</button>
-    <br/>
-    <input type="number" id="startLevel" value="-32768"/>
-    <input type="number" id="endLevel" value="32768"/>
-    <button onclick="setLevel()">设置起止电平(dBm)</button>
-
+    <button onclick="setSuspend()" style="padding-top: 10px;">暂停</button>
     <div id="cont" class="cont" ></div>
     <script type="module" >
         
@@ -53,20 +44,6 @@
             gram.setSuspend(su)
         }
 
-        window.setFreq= function(){
-            const s = document.getElementById("startFreq").value
-            const e = document.getElementById("endFreq").value
-            gram.setViewStartEnd(parseInt(s),parseInt(e))
-            // gram2.setViewFreqRange(parseInt(s),parseInt(e))
-        }
-        
-        window.setLevel= function(){
-            const s = document.getElementById("startLevel").value
-            const e = document.getElementById("endLevel").value
-            gram.setViewRange(parseInt(s),parseInt(e))
-        }
-        
-
         // animate
         axios.get('./real-number.dat', { responseType: 'arraybuffer' }).then(res => {
                 const bitData = res.data
@@ -84,7 +61,7 @@
                     //取数下标更新
                     index += MAX_POINTS
                     
-                }, 1000/60)
+                }, 0)
 
             })
         

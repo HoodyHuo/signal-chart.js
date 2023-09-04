@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>语图</title>
+    <script src="axios.js"></script>
+    <style>
+        .cont2{
+            height: 400px;
+            width: 700px;
+            background-color: #3083d6;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="cont2" class="cont2"></div>
+
+    <script type="module" >
+        import {Spectrogram} from '../lib/signal-chart.js'
+        const MAX_POINTS  = 4800//16384 *5 //4800 
+        const cacheCount = 500
+        const gram2 = new Spectrogram({
+            cacheCount: cacheCount,
+            Performance: true, // 是否打开性能监视窗口
+            El: document.getElementById("cont2"), // 图形绘制节点 
+            color:{
+                front: ['black','blue','green','red','yellow','white'],
+                background:"#11FFFF",
+                label: "#ffffff",
+                axis: "#ffffff"
+            },
+            type:0,
+            fftLen:MAX_POINTS
+        })
+
+        //设置当前图谱的频率范围
+        // gram.setFreqRange(-4800,4800)
+        gram2.setFreqRange(0,4800)
+        //设置可视区域的范围
+        // animate
+        axios.get('./fftData-4.dat', { responseType: 'arraybuffer' }).then(res => {
+                const bitData = res.data
+
+                const float32Arr = new Float32Array(bitData)
+                let index = 0
+                setInterval(function () {
+                    // 如果下标超出数据范围，重新移动到0
+                    if (index + MAX_POINTS > float32Arr.length) {
+                        index = 0
+                    }
+                    // 根据下标，从总数据包中取出接下来的一段，因为数据包含XYZ，所以长度要取 3倍
+                    const data = float32Arr.slice(index, index + MAX_POINTS )
+                    gram2.update({
+                        time:new Date().getTime(),
+                        data:data
+                    })
+                    //取数下标更新
+                    index += MAX_POINTS
+                    
+                }, 0)
+
+            })
+        
+             
+    </script>
+
+</body>
+
+</html>
