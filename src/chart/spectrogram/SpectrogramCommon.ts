@@ -1,3 +1,4 @@
+import { ColorMap } from '../../tool/ColorMap'
 import { Queue } from '../../tool/Queue'
 
 /** 朝向 */
@@ -39,15 +40,14 @@ export type SpectrogramAttr = {
   highLevel: number
   /** 缓存，保存了最近N包的数据 */
   recentCache: Queue<FrameData>
+  /** 色谱 */
+  color: ColorMap
 }
 
 export enum SpectrogramColorMap {
   Rainbow,
 }
 
-export interface ColorMap {
-  get(value: number): string
-}
 export interface GramOptions {
   /** 是否打开性能监视窗口 */
   Performance: boolean
@@ -103,7 +103,7 @@ export function mergeDefaultOption(options: SpectrogramOptions): SpectrogramOpti
     /** Y轴与canvas的距离px */
     HORIZONTAL_AXIS_MARGIN: 20,
     /** X轴标尺与canvas的距离px */
-    VERTICAL_AXIS_MARGIN: 50,
+    VERTICAL_AXIS_MARGIN: 40,
   }
   const color = Object.assign(defaultOpt.color, options?.color)
   const temp = Object.assign(defaultOpt, options)

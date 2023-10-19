@@ -65,4 +65,11 @@ export class ColorMap {
 
     return index
   }
+  /**
+   * 获取色谱位图
+   * @returns 位图
+   */
+  public getColorImage(): ImageData {
+    return this.imageData
+  }
 }
