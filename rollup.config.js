@@ -42,7 +42,7 @@ const config = {
     // rollup 编译 typescript
     rollupTypescript(),
     // babel 配置
-    /** 兼容
+    /** 兼容*/
     babel({
       // 编译库使用
       babelHelpers: 'runtime',
@@ -50,7 +50,7 @@ const config = {
       exclude: 'node_modules/**',
       // babel 默认不支持 ts 需要手动添加
       extensions: [...DEFAULT_EXTENSIONS, '.ts'],
-    }), */
+    }),
   ],
 }
 // 若打包正式环境，压缩代码
